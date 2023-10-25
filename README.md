@@ -90,7 +90,7 @@ Deklaracja zmiennych może odbywać się w dowolnym miejscu w programie. Jednak 
 - block                     = "{", {statement}, "}"
 - statement                 = function_call, ";", | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
 - assignment               	= id, "=", expression;
-- currency_assigment		= id, "=", currency_type, "(" num_const, ")";
+- currency_assigment		= id, "=", currency_const;
 - function_call             = id, ["(", [argument_list], ")"];
 - if_statement              = "if", "(", expression, ")", block, ["else", block];
 - while_statement           = "while", "(", expression, ")", block;
@@ -105,12 +105,12 @@ Deklaracja zmiennych może odbywać się w dowolnym miejscu w programie. Jednak 
 - exponent_factor			= numeric_term;
 - numeric_term				= constant | "(", expression, ")" | function_call;
 - constant 					= num_const | bool_const | string_const;
+- currency_const			= num_const , currency_id;
 - num_const					= non_zero_digit, {digit}, [".", {digit}];
 - bool_const				= "true" | "false";
 - string_const				= '"', {char}, '"';
 - char						= {not_zero_digit | not_digit | zero_digit};
 - zero_digit				= "0";
-- currency_type 			= "EUR" | "USD" | "PLN" | ...;
 - not_zero_digit			= "1" | "2" | "3" | ...;
 - not_digit					= "A" | "B" | ... | "z" | "$" | "@" | ...;
 
@@ -222,20 +222,20 @@ main()
 ```
 main()
 {
-	a = EUR(20.20);
-	b = USD(40);
+	a = 20.20 EUR;
+	b = 40 USD;
 }
 ```
 ### Operacje na zmiennych walutowych
 ```
 main()
 {
-	a = EUR(20.20);
-	b = USD(40);
+	a = 20.20 EUR;
+	b = 40 USD;
 	a = a * 0.5; # 10.10 EUR
-	b = b + USD(20); # 60 USD
+	b = b + 20 USD; # 60 USD
 	c = a + b; # w takim przypadku dodawanie sprowadzi walutę do droższej, w tym przypadku będzie to EUR
-	d = PLN(200);
+	d = 200 PLN;
 	d = d -> USD; # zmienna D zostanie w takim wypadku przewalutowana i zamieniona na USD
 }
 	
