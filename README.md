@@ -1,92 +1,358 @@
 # TKOM 23Z
 
+Karol Kasperek
+
+Język programowania: Python
+
+Temat: 
+Język z typem walutowym
+
+Opiekun projektu: dr inż. Piotr Gawkowski
+
+## Założenia podstawowe
+- dynamicznie typowany
+- słabo typowany
+- zmienne są mutowalne
+- tworzenie zmiennych oraz przypisanie do nich wartości znakiem '='
+- brak składniowego rozdzielenia deklaracji zmiennej oraz przypisania wartości
+- podstawowe typy liczbowe (int, float), operacje matematyczne zachowujące kolejność działań i nawiasowanie
+- podstawowy typ znakowy (string), konkatenacja dwóch łańcuchów znakowych
+- komentarz w linijce oznaczony znakiem `#` (rozpoczęcie w dowolnym miejscu, koniec wraz z końcem linii)
+- definiowanie własnych funkcji (wartość do funkcji przekazywana przez referencje)
+- bloki kodu ograniczone przez nawias klamrowy
+- wyrażenia zakończone średnikiem
+- podstawowe typy danych: int, float, bool, string
+- dodatkowy typ danych: typ walutowy
+- funkcja może wywoływać siebie samą (rekursja)
+- plik z kodem źródłowym zawierają pojedyńczy punkt wejścia 'main()'
+- można odwoływać się do funkcji zdefiniowanych przed i po bloku
+- obsługiwanie jedynie definicji funkcji znajdujących się w pliku
+- intrukcja warunkowa 'if' z 'else'
+- instrukcja pętli 'while'
+- instrukcje sterujące return, break, continue
+- możliwość wypisywania danych na standardowe wyjście - funkcja 'print()'
+- wczytywanie danych od użytkownika za pomocą funkcji 'input()'
+- obsługa błędów
+- obsługa operatorów arytmetycznych +,-,*,/,^
+- obsługa operatorów porównujących <,>,<=,>=,==,!=
+- obsługa operatorów logicznych ||, &&, !
+- operator przewalutowania ->
+- pobieranie aktualnych kursów walutowych ze strony i tworzenie macierzy pomiędzy nimi
 
 
-## Getting started
+## Założenia niefunkcjonalne
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- leniwa tokenizacja - umożliwi to przetwarzanie dużych plików
+- projekt zaimplementowany w języku python
+- podział na 3 moduły - lekser, parser oraz interpreter
+- operatory - realizacja priorytetów operatorów zgodna z dokumentacją języka C++ - https://en.cppreference.com/w/cpp/language/operator_precedence
+- stworzenie oddzielnego modułu zarządzającego błędami
+- kursy walut powinny być aktualizowane minimum raz dziennie
+- obsługa wielu walut
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
 
-## Add your files
+## Podstawowe instrukcje języka
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+### Instrukcja warunkowa
+
+Obsługiwanie podstawowe instrukcji warunkowej:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab-stud.elka.pw.edu.pl/TKOM_23Z_PG/Karol_Mateusz_Kasperek/TKOM-23Z.git
-git branch -M main
-git push -uf origin main
+if(5 > 4){
+    print(6);    
+}
 ```
 
-## Integrate with your tools
+### Pętla
 
-- [ ] [Set up project integrations](https://gitlab-stud.elka.pw.edu.pl/TKOM_23Z_PG/Karol_Mateusz_Kasperek/TKOM-23Z/-/settings/integrations)
+Obsługa podstawowej pętli (while): 
 
-## Collaborate with your team
+```
+while(5 > 4){
+    print(6);
+}
+```
+## Założenia dodatkowe
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+Mój język ma na celu udostępnienie dodatkowych opcji odnośnie wykonywania operacji na międzynarodowych systemach walutowych. W moim języku zostaną zaimplementowane dodatkowe zmienne, które będą umożliwiały zapisywanie wartości w innych walutach. Przykładowy kod zostanie podany niżej. Dane o kursach walutowych będą pobierane ze strony internetowej oraz będzie tworzona macierz zależności tych kursów pomiędzy sobą. Będzie to uproszczało operacje, ponieważ będzie można odwoływać się do poszczególnych pól, zamiast wykonywać operacje przewalutowania. Interpreter będzie przetrzymywał typ walutowy w postaci ENUM.
 
-## Test and Deploy
+## Zakres zmiennych
 
-Use the built-in continuous integration in GitLab.
+Deklaracja zmiennych może odbywać się w dowolnym miejscu w programie. Jednak wraz z opuszczeniem danego bloku kodu, wszystkie zmienne stworzone w nim zostaną utracone i ich nazwy zostaną zwolnione w pozostałej części kodu.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Gramatyka
 
-***
+- program                   = {function_definition};
+- function_definition     	= id, "(", [parameter_list], ")", block;
+- id                        = letter, {letter | digit | "_"};
+- argument_list				= expression, {",", expression};
+- parameter_list			= id, {",", id};
+- block                     = "{", {statement}, "}"
+- statement                 = function_call, ";", | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
+- assignment               	= id, "=", expression;
+- currency_assigment		= id, "=", currency_type, "(" num_const, ")";
+- function_call             = id, ["(", [argument_list], ")"];
+- if_statement              = "if", "(", expression, ")", block, ["else", block];
+- while_statement           = "while", "(", expression, ")", block;
+- return_statement          = "return", expression;
+- expression				= or_term , ["||", or_term];
+- or_term					= and_term, ["&&", and_term];
+- and_term					= ["!"], comparison;
+- comparison				= additive_expression, [("==" | "!=" | ">=" | "<=" | "<" | ">"), additive_expression];
+- additive_expression       = multiplicative_expression, {"+" | "-"}, multiplicative_expression;
+- multiplicative_expression	= factor, {"*" | "/"}, factor;
+- factor					= [-], exponent_factor, {"^", exponent_factor};
+- exponent_factor			= numeric_term;
+- numeric_term				= constant | "(", expression, ")" | function_call;
+- constant 					= num_const | bool_const | string_const;
+- num_const					= non_zero_digit, {digit}, [".", {digit}];
+- bool_const				= "true" | "false";
+- string_const				= '"', {char}, '"';
+- char						= {not_zero_digit | not_digit | zero_digit};
+- zero_digit				= "0";
+- currency_type 			= "EUR" | "USD" | "PLN" | ...;
+- not_zero_digit			= "1" | "2" | "3" | ...;
+- not_digit					= "A" | "B" | ... | "z" | "$" | "@" | ...;
 
-# Editing this README
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
 
-## Name
-Choose a self-explaining name for your project.
+## Przykładowy kod
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### Przypisanie wartości do zmiennej
+```
+main()
+{
+	var_int = 5;
+	var_bool = true;
+	var_float = 5.5;
+	var_string = "string";
+}
+```
+### Wypisywanie wartości 
+```
+main()
+{
+	print(var_int); # 5
+	print(var_bool); # true
+	print(var_float); # 5.5
+	print(var_string); # string
+}
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+### Konkatenacja łańcuchów znaków
+```
+main()
+{
+	str = "poczatek";
+	str2 = "koniec";
+	str3 = str + str2;
+	print(str3); # poczatekkoniec
+	print(str + str2); # poczatekkoniec
+}
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### Komentarz kodu
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```
+main()
+{
+	x = 5; # tutaj jest komentarz
+}
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### Dostępność zmiennych
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```
+mian()
+{
+	cost = 21;
+	tax = cost * 0.1;
+	totalCost = tax + cost;
+	if(totalCost > 20)
+	{
+		diff = totalCost - 20;
+		print(diff); # 3.1
+	}
+	print(diff); # zmienna już nie istnieje
+}
+```
+### Definiowanie własnej funkcji ze zwracaniem wartości oraz wywołanie
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```
+func(x)
+{
+	return x * x;
+}
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+main()
+{
+	y = 5;
+	result = func(y);
+	print(result); # 25
+}
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```
+### Rekursja
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```
+func(x)
+{
+	if(x > 5){
+		func(x-1);
+	}
+	return 10;
+}
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+main()
+{
+	func(8); # 10
+}
+```
+### Kolejność wykonywania działań
+```
+main()
+{
+	x = (2 * 2) + 2 / 2; # x == 5
+	y = 5 * 5 / 5 + 5 * (2 + 1); # y == 20
+	z = (8 + 8) / (4 + 4); # z == 2
+}
+```
+### Stworzenie typu walutowego
+```
+main()
+{
+	a = EUR(20.20);
+	b = USD(40);
+}
+```
+### Operacje na zmiennych walutowych
+```
+main()
+{
+	a = EUR(20.20);
+	b = USD(40);
+	a = a * 0.5; # 10.10 EUR
+	b = b + USD(20); # 60 USD
+	c = a + b; # w takim przypadku dodawanie sprowadzi walutę do droższej, w tym przypadku będzie to EUR
+	d = PLN(200);
+	d = d -> USD; # zmienna D zostanie w takim wypadku przewalutowana i zamieniona na USD
+}
+	
+```
 
-## License
-For open source projects, say how it is licensed.
+### Escaping stałych znakowych
+```
+main()
+{
+	print("Przykładowy tekst\""); # Przykładowy tekst"
+}
+```
+### Przykładowy wygląd programu
+```
+main()
+{
+	x = 5;
+	y = "abc";
+	yy = "xyz";
+	z = 5.5;
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+	b = y + yy;
+	c = "abcxyz";
+	if(b == c)
+	{
+		print(x);
+	}
+	else
+	{
+		while(x > 2)
+		{
+			print(x);
+			x = x - 1;
+		}
+	}
+    
+    return 0;
+}
+```
+
+## Przykładowe fragmenty błędnego kodu
+
+### Błąd porównania
+```
+main()
+{
+	x = 5;
+	y = "ABC";
+	if(x > y)
+	{
+		print(1);
+	}
+}
+```
+
+### Błąd przypisania zmiennej
+```
+main()
+{
+	x = "5;
+	print(x);
+}
+```
+
+## Obsługa błędów
+
+W przypadku napotkania błędu podczas pracy lexera/parsera/interpretera, error manager agreguje i dzieli błędy na krytyczne i niekrytyczne. Error manager będzie przekazywany do modułów w konstruktorze. Error manager będzie W momencie napotkania błędu krytycznego podniesiony zostanie wyjątek, który będzie obsłużony na zewnątrz, natomiast gdy błąd jest niekrytyczny, użytkownik otrzyma informację o jego wystąpieniu, jednak program może dalej wykonywać się poprawnie.
+
+### Lekser:
+#### Niekrytyczne
+- Overflow 			- przekroczenie zakresu liczbowego (Overflow in line {10}, column {20})
+- UnknownToken 		- token jest nierozpoznany (Unknown token {name} in line {10}, column {20})
+- StringTooLong 	- ciąg znaków jest za długi (String too long in line {10}, column {20})
+- InfiniteString 	- brak kończącego cudzysłowia dla typu string (String without end startin in line {10}, column {20})
+
+
+### Parser
+#### Krytyczne
+- UnexpectedToken 	- tokeny w niepoprawnej kolejności względem przyjętej gramatyki (Unexpected Token {string} in line {10}, column{20})
+- DuplicateDefinition - ponowna definicja funkcji o tej samej nazwie (Duplicate function {name} in line {10}, column {20})
+- ExpectingIdentifier - oczekiwano identyfikatora, a otrzymano inny symbol (Expecting identifier in line {10}, columnt {20})
+- ExpectingExpression - oczekiwano wyrażenia, a otrzymano inny symbol (Expecting expression in line {10}, columnt {20})
+#### Niekrytyczne
+- MissingSemicolon - brak średnika {Missing semi-colon in line {10}, column {20}}
+
+### Interpreter
+#### Krytyczne
+- DivisionByZero - dzielenie przez zero (Division by zero try in line {10}, column {20})
+- UndefinedVariable - użyto zmiennej, która nie została jeszcze zadeklarowana (No variable {name} in scope or not defined in line {10}, columnt {20})
+- WrongTypeForOperation - operacja na obiekcie innego niż typu numerycznego lub logiczny (Operation between types {string} and {int} is not allowed in line {10}, column {20})
+- NotExactArguments - liczba argumentowych w funckji jest niepoprawna (Not exact number of arguments in line {10}, column {20})
+- FunctionNotFound - funkcja o takiej nazwie nie istnieje (Function not found {name} in line {10}, columnt {20})
+- NoMainFunction - brak funckcji wejścia (File doesn't have main function)
+
+
+## Struktura projektu
+- Lekser - przetwarzanie tekstu na tokeny
+- Parser - budowanie struktury obiektów z tokenów otrzymanych od leksera
+- Interpreter - wykonywanie kodu, dołącznie zewnętrznych typów
+- Testy - przy użyciu pytest
+- Error Manager - obsługa błędów w kodzie
+
+Interface pomiędzy lekserem, a parserem będzie wyglądał w następujący sposób. Główny plik stworzy konieczne obiekty (lexer, parser itp.), a następnie wywoła metodę parse(), która spowoduje przechodzenie przez plik tekstowy otrzymany do interpretacji i przetworzy na bieżąco otrzymane tokeny w drzewo AST. Gdy praca z aktualnym tokenem zakończy się, wykonana zostanie metoda next() w lekserze. Dzięki temu uzyskamy leniwą tokenizację. Każdy z modułów może również zgłosić błąd, przy użyciu obiektu ErrorManagera.
+
+
+## Testowanie
+Do testów jednostkowych użyje biblioteki pytest.
+Projekt zamierzam testować zgodnie z popularną konwencją: 
+- Testy jednostkowe - do poszczególnych funkcji
+- Testy integracyjne - sprawdzające połączenia między elementami
+- Testy akceptacyjne - działanie końcowego programu, będę one rozszerzeniem kodu zawartego w dokumentacji wstępnej, mają one na celu sprawdzenie wszystkich podstawowych założeń języka takich jak: 
+- - tworzenie zmiennych
+- - instrukcja warunkowa i pętla
+- - operatory arytmetyczne
+- - rekursja
+- - kolejność wykonywania działań
+- - zamiana walut oraz działania na nich
+- - konkatenacja stringów
+- - przekazywanie zmiennych przez referencje
+Do testów akceptacyjnych użyję również fragmentów kodu zawartych w dokumentacji. Podczas testowanie zostanie on jednak rozszerzony.
