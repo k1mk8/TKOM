@@ -252,10 +252,12 @@ main()
 	b = 40 USD;
 	a = a * 0.5; # 10.10 EUR
 	b = b + 20 USD; # 60 USD
-	c = a + b; # w takim przypadku dodawanie sprowadzi walutę do droższej, w tym przypadku będzie to EUR
+	c = a + b; # w takim przypadku dodawanie sprowadzi walutę do typu waluty pierwszej zmiennej
+	x = b + 20 EUR; # tak samo jak powyżej, zostanie zamieniona na typ waluty b
 	d = 200 PLN;
 	d = d -> USD; # zmienna D zostanie w takim wypadku przewalutowana i zamieniona na USD
 	e = a -> d.currency_type; # wartośc ze zmiennej a zostanie przewalutowana na typ waluty ze zmiennej d i zapisana w zmiennej e
+	f = 20 PLN;
 }
 	
 ```
