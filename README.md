@@ -88,9 +88,9 @@ Deklaracja zmiennych może odbywać się w dowolnym miejscu w programie. Jednak 
 - argument_list				= expression, {",", expression};
 - parameter_list			= id, {",", id};
 - block                     = "{", {statement}, "}"
-- statement                 = function_call, ";", | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
+- statement                 = variable_access | function_call, ";", | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
+- variable_access 			= id, ".", id;
 - assignment               	= id, "=", expression;
-- currency_assigment		= id, "=", currency_const;
 - function_call             = id, ["(", [argument_list], ")"];
 - if_statement              = "if", "(", expression, ")", block, ["else", block];
 - while_statement           = "while", "(", expression, ")", block;
@@ -102,13 +102,14 @@ Deklaracja zmiennych może odbywać się w dowolnym miejscu w programie. Jednak 
 - additive_expression       = multiplicative_expression, {"+" | "-"}, multiplicative_expression;
 - multiplicative_expression	= factor, {"*" | "/"}, factor;
 - factor					= [-], exponent_factor, {"^", exponent_factor};
-- exponent_factor			= numeric_term;
+- exponent_factor			= numeric_term, "->" [variable_access | currency_id];
 - numeric_term				= constant | "(", expression, ")" | function_call;
-- constant 					= num_const | bool_const | string_const;
+- constant 					= num_const | bool_const | string_const | currency_const;
 - currency_const			= num_const , currency_id;
 - num_const					= non_zero_digit, {digit}, [".", {digit}];
 - bool_const				= "true" | "false";
 - string_const				= '"', {char}, '"';
+- currency_id				= {char};
 - char						= {not_zero_digit | not_digit | zero_digit};
 - zero_digit				= "0";
 - not_zero_digit			= "1" | "2" | "3" | ...;
@@ -207,6 +208,23 @@ func(x)
 main()
 {
 	func(8); # 10
+	a = 5;
+	func(a);
+}
+```
+
+### Przekazywanie przez referencje
+```
+func(x)
+{
+	x = x + 5;
+}
+
+main()
+{
+	y = 4;
+	func(y); # y = 9;
+	z = y * 4; # z = 36;
 }
 ```
 ### Kolejność wykonywania działań
@@ -237,6 +255,7 @@ main()
 	c = a + b; # w takim przypadku dodawanie sprowadzi walutę do droższej, w tym przypadku będzie to EUR
 	d = 200 PLN;
 	d = d -> USD; # zmienna D zostanie w takim wypadku przewalutowana i zamieniona na USD
+	e = a -> d.currency_type; # wartośc ze zmiennej a zostanie przewalutowana na typ waluty ze zmiennej d i zapisana w zmiennej e
 }
 	
 ```
