@@ -20,9 +20,9 @@ Opiekun projektu: dr inż. Piotr Gawkowski
 - komentarz w linijce oznaczony znakiem `#` (rozpoczęcie w dowolnym miejscu, koniec wraz z końcem linii)
 - definiowanie własnych funkcji (wartość do funkcji przekazywana przez referencje)
 - bloki kodu ograniczone przez nawias klamrowy
-- wyrażenia zakończone średnikiem
+- wyrażenia oraz instrukcje zakończone średnikiem
 - podstawowe typy danych: int, float, bool, string
-- dodatkowy typ danych: typ walutowy
+- dodatkowy typ danych: typ walutowy, zawierający atrybut currency_type, odwołanie po kropce podane w przykładach kodu, brak mutowalności
 - funkcja może wywoływać siebie samą (rekursja)
 - plik z kodem źródłowym zawierają pojedyńczy punkt wejścia 'main()'
 - można odwoływać się do funkcji zdefiniowanych przed i po bloku
@@ -36,8 +36,8 @@ Opiekun projektu: dr inż. Piotr Gawkowski
 - obsługa operatorów arytmetycznych +,-,*,/,^
 - obsługa operatorów porównujących <,>,<=,>=,==,!=
 - obsługa operatorów logicznych ||, &&, !
-- operator przewalutowania ->
-- pobieranie aktualnych kursów walutowych ze strony i tworzenie macierzy pomiędzy nimi
+- operator przewalutowania ->, priorytet na poziomie priorytetu operatora negacji
+- pobieranie aktualnych kursów walutowych ze strony i tworzenie macierzy pomiędzy nimi (macierz będzie zawierać informacje o kursie przewalutowania pomiędzy konkretnymi walutami)
 
 
 ## Założenia niefunkcjonalne
@@ -78,7 +78,7 @@ Mój język ma na celu udostępnienie dodatkowych opcji odnośnie wykonywania op
 
 ## Zakres zmiennych
 
-Deklaracja zmiennych może odbywać się w dowolnym miejscu w programie. Jednak wraz z opuszczeniem danego bloku kodu, wszystkie zmienne stworzone w nim zostaną utracone i ich nazwy zostaną zwolnione w pozostałej części kodu.
+Deklaracja zmiennych może odbywać się w dowolnym funckji w programie. Jednak wraz z opuszczeniem danego bloku kodu, wszystkie zmienne stworzone w nim zostaną utracone i ich nazwy zostaną zwolnione w pozostałej części kodu.
 
 ## Gramatyka
 
@@ -94,7 +94,7 @@ Deklaracja zmiennych może odbywać się w dowolnym miejscu w programie. Jednak 
 - function_call             = id, ["(", [argument_list], ")"];
 - if_statement              = "if", "(", expression, ")", block, ["else", block];
 - while_statement           = "while", "(", expression, ")", block;
-- return_statement          = "return", expression;
+- return_statement          = "return", [expression];
 - expression				= or_term , ["||", or_term];
 - or_term					= and_term, ["&&", and_term];
 - and_term					= ["!"], comparison;
@@ -109,7 +109,7 @@ Deklaracja zmiennych może odbywać się w dowolnym miejscu w programie. Jednak 
 - num_const					= non_zero_digit, {digit}, [".", {digit}];
 - bool_const				= "true" | "false";
 - string_const				= '"', {char}, '"';
-- currency_id				= {char};
+- currency_id				= {char}; 									# będzie znajdował się w ścisłym zakresie nazw zapisanych w konfiguracji
 - char						= {not_zero_digit | not_digit | zero_digit};
 - zero_digit				= "0";
 - not_zero_digit			= "1" | "2" | "3" | ...;
