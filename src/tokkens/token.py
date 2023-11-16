@@ -122,6 +122,6 @@ class Position:
 
 @dataclass
 class Token:
-    name: Any
+    value: Any
     position: Position
     type: TokenType

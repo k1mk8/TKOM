@@ -78,40 +78,40 @@ class Lexer(Lexer):
 
     def _try_build_end_of_text(self):
         if not self._character:
-            return Token(name=None, position=self._token_start_position, type=TokenType.EOF)
+            return Token(value=None, position=self._token_start_position, type=TokenType.EOF)
         return None
 
     def _try_build_simple_token(self):
         type = SYMBOL_MAPPING.get(self._character, None)
         if not type:
             return None
-        name = self._character
+        value = self._character
         self._next_character()
-        return Token(name=name, position=self._token_start_position, type=type)
+        return Token(value=value, position=self._token_start_position, type=type)
 
     def _try_build_number(self):
         if not self._character.isdecimal():
             return None
         error = None
-        name = int(self._character)
+        value = int(self._character)
         self._next_character()
-        if name != 0:
+        if value != 0:
             while self._character.isdecimal():
                 decimal = int(self._character)
-                if (sys.maxsize - decimal) / 10 - name > 0:
-                    name = name * 10 + decimal
+                if (sys.maxsize - decimal) / 10 - value > 0:
+                    value = value * 10 + decimal
                 else:
-                    name = str(name)
+                    value = str(value)
                     while self._character.isdecimal() or self._character == '.':
-                        name += self._character
+                        value += self._character
                         self._next_character()
-                    error = Overflow(position=self._token_start_position, name=name) #TODO
+                    error = Overflow(position=self._token_start_position, name=value) #TODO
                     if not self._error_handler.save_error(error):
                         raise Exception('Error handler is full')
-                    return Token(name=name, position=self._token_start_position, type=TokenType.ERROR)
+                    return Token(value=value, position=self._token_start_position, type=TokenType.ERROR)
                 self._next_character()
         if not self._character == '.':
-            return Token(name=name, position=self._token_start_position, type=TokenType.INT)
+            return Token(value=value, position=self._token_start_position, type=TokenType.INT)
         number_of_decimals = 0
         fraction = 0
         self._next_character()
@@ -120,8 +120,8 @@ class Lexer(Lexer):
             fraction = fraction * 10 + decimal
             number_of_decimals += 1
             self._next_character()
-        name = name + fraction * pow(10, -number_of_decimals)
-        return Token(name=name, position=self._token_start_position, type=TokenType.FLOAT)
+        value = value + fraction * pow(10, -number_of_decimals)
+        return Token(value=value, position=self._token_start_position, type=TokenType.FLOAT)
 
     def _try_build_identifier_or_keyword(self):
         if not self._character.isalpha() and not self._character == '_':
@@ -131,25 +131,25 @@ class Lexer(Lexer):
         while self._character and (self._character.isalnum() or self._character == '_'):
             if len(identifier) == self._str_len_limit:
                 self._error_handling(identifier, 2)
-                return Token(name=''.join(identifier), position=self._token_start_position, type=TokenType.COMMENT)
+                return Token(value=''.join(identifier), position=self._token_start_position, type=TokenType.COMMENT)
             identifier.append(self._character)
             self._next_character()
         identifier = ''.join(identifier)
         type = KEY_MAPPING.get(identifier, None) or BOOL_MAPPING.get(identifier, None) or TokenType.ID
-        return Token(name=identifier, position=self._token_start_position, type=type)
+        return Token(value=identifier, position=self._token_start_position, type=type)
 
     def _try_build_comment(self):
         if self._character == '#':
-            name = []
+            value = []
             self._next_character()
             while self._character and self._character.encode() != self._newline_symbol:
-                if len(name) == self._str_len_limit:
-                    self._error_handling(name, 1)
-                    return Token(name=''.join(name), position=self._token_start_position, type=TokenType.COMMENT)
-                name.append(self._character)
+                if len(value) == self._str_len_limit:
+                    self._error_handling(value, 1)
+                    return Token(value=''.join(value), position=self._token_start_position, type=TokenType.COMMENT)
+                value.append(self._character)
                 self._next_character()
-            name = ''.join(name)
-            return Token(name=name, position=self._token_start_position, type=TokenType.COMMENT)
+            value = ''.join(value)
+            return Token(value=value, position=self._token_start_position, type=TokenType.COMMENT)
         return None
 
     def _try_build_string(self):
@@ -179,14 +179,14 @@ class Lexer(Lexer):
         if error:
             if not self._error_handler.save_error(error):
                 raise Exception('Error handler is full')
-        return Token(name=literal, position=self._token_start_position, type=TokenType.STR)
+        return Token(value=literal, position=self._token_start_position, type=TokenType.STR)
 
     def _try_build_operator(self):
         if self._character in ['+', '/', '*', '^']:
             operator = self._character
             operator_type = OPERATOR_MAPPING.get(operator, None)
             self._next_character()
-            return Token(name=operator, position=self._token_start_position, type=operator_type)
+            return Token(value=operator, position=self._token_start_position, type=operator_type)
         elif self._character in ['=', '>', '<', '!', '&', '|', '-']:
             operator = self._character
             self._next_character()
@@ -194,30 +194,30 @@ class Lexer(Lexer):
             operator_type = OPERATOR_MAPPING.get(operator, None)
             if operator_type:
                 self._next_character()
-                return Token(name=operator, position=self._token_start_position, type=operator_type)
+                return Token(value=operator, position=self._token_start_position, type=operator_type)
             self._next_character()
             error = UnknownTokens(position=self._token_start_position, name=operator)
             if not self._error_handler.save_error(error):
                 raise Exception('Error handler is full')
-            return Token(name=operator, position=self._token_start_position, type=TokenType.ERROR)
+            return Token(value=operator, position=self._token_start_position, type=TokenType.ERROR)
         else:
             return None
 
     def _try_build_unknown(self):
-        name = self._character
-        error = UnknownTokens(position=self._token_start_position, name=name)
+        value = self._character
+        error = UnknownTokens(position=self._token_start_position, name=value)
         if not self._error_handler.save_error(error):
             raise Exception('Error handler is full')
         self._next_character()
-        return Token(name=name, position=self._token_start_position, type=TokenType.ERROR)
+        return Token(value=value, position=self._token_start_position, type=TokenType.ERROR)
     
-    def _error_handling(self, name, flag):
+    def _error_handling(self, value, flag):
         if flag == 1:
-            error = CommentTooLong(position=self._token_start_position, name=''.join(name[:20]))
+            error = CommentTooLong(position=self._token_start_position, name=''.join(value[:20]))
         elif flag == 2:
-            error = NameTooLong(position=self._token_start_position, name=''.join(name[:20]))
+            error = NameTooLong(position=self._token_start_position, name=''.join(value[:20]))
         elif flag == 3:
-            error = StringTooLong(position=self._token_start_position, name=b''.join(name[:20]))
+            error = StringTooLong(position=self._token_start_position, name=b''.join(value[:20]))
         if not self._error_handler.save_error(error):
             raise Exception('Error handler is full')
         loop_count = 0
@@ -225,5 +225,5 @@ class Lexer(Lexer):
             loop_count += 1
             self._next_character()
         if loop_count ==  4 * self._str_len_limit:
-            error = TooLongLine(position=self._token_start_position, name=None)
+            error = TooLongLine(position=self._token_start_position, value=None)
             self._error_handler.fatal_error(error)
