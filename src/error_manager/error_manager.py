@@ -15,3 +15,6 @@ class ModulErrorManager(ErrorManager):
 
     def save_error(self, error: type[Error]):
         self._errors.append(error)
+        if len(self._errors) > 100:
+            return False
+        return True

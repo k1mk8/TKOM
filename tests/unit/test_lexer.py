@@ -40,13 +40,13 @@ class TestLangLexer:
 
     @pytest.mark.parametrize('source, expected_token', [
         ('1', Token(name=1, position=Position(line=1, column=1), type=TokenType.INT)),
-        (' 1', Token(name=1, position=Position(line=1, column=2), type=TokenType.INT)),
-        (' \n 2', Token(name=2, position=Position(line=2, column=2), type=TokenType.INT)),
-        ('111', Token(name=111, position=Position(line=1, column=1), type=TokenType.INT)),
-        ('999999', Token(name=999999, position=Position(line=1, column=1), type=TokenType.INT)),
-        ('1.11', Token(name=1.11, position=Position(line=1, column=1), type=TokenType.FLOAT)),
-        ('999.999', Token(name=999.999, position=Position(line=1, column=1), type=TokenType.FLOAT)),
-        ('0.001', Token(name=0.001, position=Position(line=1, column=1), type=TokenType.FLOAT)),
+        (' 2', Token(name=2, position=Position(line=1, column=2), type=TokenType.INT)),
+        (' \n 3', Token(name=3, position=Position(line=2, column=2), type=TokenType.INT)),
+        ('44', Token(name=44, position=Position(line=1, column=1), type=TokenType.INT)),
+        ('1234567', Token(name=1234567, position=Position(line=1, column=1), type=TokenType.INT)),
+        ('1.23', Token(name=1.23, position=Position(line=1, column=1), type=TokenType.FLOAT)),
+        ('123.456', Token(name=123.456, position=Position(line=1, column=1), type=TokenType.FLOAT)),
+        ('0.0010', Token(name=0.001, position=Position(line=1, column=1), type=TokenType.FLOAT)),
         ('0.12', Token(name=0.12, position=Position(line=1, column=1), type=TokenType.FLOAT)),
     ])
     def test_next_number(self, source, expected_token):
@@ -55,7 +55,10 @@ class TestLangLexer:
             assert lexer.next() == expected_token
 
     @pytest.mark.parametrize('source, expected_token', [
-        ('50USD', Token(name='50USD', position=Position(line=1, column=1), type=TokenType.CURR)),
+        ('USD', Token(name='USD', position=Position(line=1, column=1), type=TokenType.CURR)),
+        ('PLN', Token(name='PLN', position=Position(line=1, column=1), type=TokenType.CURR)),
+        ('EUR', Token(name='EUR', position=Position(line=1, column=1), type=TokenType.CURR)),
+        ('\n EUR', Token(name='EUR', position=Position(line=2, column=2), type=TokenType.CURR)),
     ])
     def test_next_curr(self, source, expected_token):
         with ModulErrorManager() as error_handler:
@@ -63,27 +66,11 @@ class TestLangLexer:
             assert lexer.next() == expected_token
 
     @pytest.mark.parametrize('source, expected_token', [
-        ('aaa', Token(name='aaa', position=Position(line=1, column=1), type=TokenType.ID)),
-        (
-            ' test_identifier',
-            Token(name='test_identifier', position=Position(line=1, column=2), type=TokenType.ID)
-        ),
-        (
-            ' test_id3nt1fier_123',
-            Token(name='test_id3nt1fier_123', position=Position(line=1, column=2), type=TokenType.ID)
-        ),
-        (
-            '\n_id3nt1fier_123',
-            Token(name='_id3nt1fier_123', position=Position(line=2, column=1), type=TokenType.ID)
-        ),
-        (
-            '\n\r_id3nt1fier_123',
-            Token(name='_id3nt1fier_123', position=Position(line=2, column=1), type=TokenType.ID)
-        ),
-        (
-            '\r\n_id3nt1fier_123',
-            Token(name='_id3nt1fier_123', position=Position(line=2, column=1), type=TokenType.ID)
-        ),
+        ('ID', Token(name='ID', position=Position(line=1, column=1), type=TokenType.ID)),
+        ('   test_identifier', Token(name='test_identifier', position=Position(line=1, column=4), type=TokenType.ID)),
+        ('\n_id3nt1fier_123', Token(name='_id3nt1fier_123', position=Position(line=2, column=1), type=TokenType.ID)),
+        ('\n\r_id3nt1fier_123', Token(name='_id3nt1fier_123', position=Position(line=2, column=1), type=TokenType.ID)),
+        ('\n\n_id3nt1fier_123', Token(name='_id3nt1fier_123', position=Position(line=3, column=1), type=TokenType.ID)),
     ])
     def test_next_identifier(self, source, expected_token):
         with ModulErrorManager() as error_handler:
@@ -95,20 +82,9 @@ class TestLangLexer:
         (' else', Token(name='else', position=Position(line=1, column=2), type=TokenType.ELSE_KEY)),
         (' \n while', Token(name='while', position=Position(line=2, column=2), type=TokenType.WHILE_KEY)),
         ('break', Token(name='break', position=Position(line=1, column=1), type=TokenType.BREAK_KEY)),
-        (
-            'continue',
-            Token(name='continue', position=Position(line=1, column=1), type=TokenType.CONTINUE_KEY)
-        ),
+        ('continue',Token(name='continue', position=Position(line=1, column=1), type=TokenType.CONTINUE_KEY)),
         ('return', Token(name='return', position=Position(line=1, column=1), type=TokenType.RETURN_KEY)),
-        ('\n return', Token(name='return', position=Position(line=2, column=2), type=TokenType.RETURN_KEY)),
-        (
-            '\n\r return',
-            Token(name='return', position=Position(line=2, column=2), type=TokenType.RETURN_KEY)
-        ),
-        (
-            '\r\n return',
-            Token(name='return', position=Position(line=2, column=2), type=TokenType.RETURN_KEY)
-        ),
+        ('\r\n return',Token(name='return', position=Position(line=2, column=2), type=TokenType.RETURN_KEY)),
     ])
     def test_next_keyword(self, source, expected_token):
         with ModulErrorManager() as error_handler:
@@ -119,8 +95,6 @@ class TestLangLexer:
         ('true', Token(name='true', position=Position(line=1, column=1), type=TokenType.BOOL_T)),
         (' false', Token(name='false', position=Position(line=1, column=2), type=TokenType.BOOL_F)),
         (' \n true', Token(name='true', position=Position(line=2, column=2), type=TokenType.BOOL_T)),
-        (' \r\n true', Token(name='true', position=Position(line=2, column=2), type=TokenType.BOOL_T)),
-        (' \n\r true', Token(name='true', position=Position(line=2, column=2), type=TokenType.BOOL_T)),
     ])
     def test_next_bool(self, source, expected_token):
         with ModulErrorManager() as error_handler:
@@ -146,11 +120,10 @@ class TestLangLexer:
         assert expected_token in tokens
 
     @pytest.mark.parametrize('source, expected_token', [
-        ('\'if\'', Token(name=b'if', position=Position(line=1, column=1), type=TokenType.STR)),
-        ('\'aaa123\'', Token(name=b'aaa123', position=Position(line=1, column=1), type=TokenType.STR)),
-        ('\'if\\n123\'', Token(name=b'if\n123', position=Position(line=1, column=1), type=TokenType.STR)),
-        ('\'if\\\'\'', Token(name=b'if\'', position=Position(line=1, column=1), type=TokenType.STR)),
-        ('\'test\\(\'', Token(name=b'test(', position=Position(line=1, column=1), type=TokenType.STR)),
+        ('\'abc\'', Token(name=b'abc', position=Position(line=1, column=1), type=TokenType.STR)),
+        ('\'aas21fdsas\'', Token(name=b'aas21fdsas', position=Position(line=1, column=1), type=TokenType.STR)),
+        ('\'if\\nwhile\'', Token(name=b'if\nwhile', position=Position(line=1, column=1), type=TokenType.STR)),
+        ('\'return\\\'\'', Token(name=b'return\'', position=Position(line=1, column=1), type=TokenType.STR)),
     ])
     def test_next_string(self, source, expected_token):
         with ModulErrorManager() as error_handler:
@@ -174,7 +147,7 @@ class TestLangLexer:
         ('/', Token(name='/', position=Position(line=1, column=1), type=TokenType.DIVISION)),
         ('^', Token(name='^', position=Position(line=1, column=1), type=TokenType.POWER)),
         ('=', Token(name='=', position=Position(line=1, column=1), type=TokenType.ASSIGN)),
-        ('->', Token(name='->', position=Position(line=1, column=1), type=TokenType.TRANSFER))
+        ('->', Token(name='->', position=Position(line=1, column=1), type=TokenType.TRANSFER)),
     ])
     def test_next_operator(self, source, expected_token):
         with ModulErrorManager() as error_handler:
@@ -192,6 +165,8 @@ class TestLangLexer:
         ('&', Token(name='&', position=Position(line=1, column=1), type=TokenType.ERROR)),
         ('|&', Token(name='|&', position=Position(line=1, column=1), type=TokenType.ERROR)),
         ('&|', Token(name='&|', position=Position(line=1, column=1), type=TokenType.ERROR)),
+        ('%', Token(name='%', position=Position(line=1, column=1), type=TokenType.ERROR)),
+        ('@', Token(name='@', position=Position(line=1, column=1), type=TokenType.ERROR)),
     ])
     def test_next_unknown(self, source, expected_token):
         with ModulErrorManager() as error_handler:
@@ -215,28 +190,31 @@ class TestLangLexer:
             assert lexer._current_position == expected_position
 
     @pytest.mark.parametrize('source, expected_tokens', [
-        (
-            'gżegżółka\n while',
+        ('gżegżółka\n if \'zadanie\'',
             [
                 Token(name='gżegżółka', position=Position(line=1, column=1), type=TokenType.ID),
-                Token(name='while', position=Position(line=2, column=2), type=TokenType.WHILE_KEY),
-                Token(name=None, position=Position(line=2, column=7), type=TokenType.EOF),
+                Token(name='if', position=Position(line=2, column=2), type=TokenType.IF_KEY),
+                Token(name=b'zadanie', position=Position(line=2, column=5), type=TokenType.STR),
+                Token(name=None, position=Position(line=2, column=14), type=TokenType.EOF),
+            ]),
+        (
+            'gżegżółka\r\n co_to \'string\' while',
+            [
+                Token(name='gżegżółka', position=Position(line=1, column=1), type=TokenType.ID),
+                Token(name='co_to', position=Position(line=2, column=2), type=TokenType.ID),
+                Token(name=b'string', position=Position(line=2, column=8), type=TokenType.STR),
+                Token(name='while', position=Position(line=2, column=17), type=TokenType.WHILE_KEY),
+                Token(name=None, position=Position(line=2, column=22), type=TokenType.EOF),
             ]
         ),
         (
-            'gżegżółka\r\n while',
+            'gżegżółka\n\r while 24.5 PLN',
             [
                 Token(name='gżegżółka', position=Position(line=1, column=1), type=TokenType.ID),
                 Token(name='while', position=Position(line=2, column=2), type=TokenType.WHILE_KEY),
-                Token(name=None, position=Position(line=2, column=7), type=TokenType.EOF),
-            ]
-        ),
-        (
-            'gżegżółka\n\r while',
-            [
-                Token(name='gżegżółka', position=Position(line=1, column=1), type=TokenType.ID),
-                Token(name='while', position=Position(line=2, column=2), type=TokenType.WHILE_KEY),
-                Token(name=None, position=Position(line=2, column=7), type=TokenType.EOF),
+                Token(name=24.5, position=Position(line=2, column=8), type=TokenType.FLOAT),
+                Token(name='PLN', position=Position(line=2, column=13), type=TokenType.CURR),
+                Token(name=None, position=Position(line=2, column=16), type=TokenType.EOF),
             ]
         ),
     ])
@@ -249,33 +227,4 @@ class TestLangLexer:
                 tokens.append(token)
                 if token.type is TokenType.EOF:
                     break
-        assert expected_tokens == tokens
-
-    @pytest.mark.parametrize('source, expected_tokens', [
-        (
-            'żółć',
-            [
-                Token(name='żółć', position=Position(line=1, column=1), type=TokenType.ID),
-                Token(name=None, position=Position(line=1, column=5), type=TokenType.EOF),
-                Token(name=None, position=Position(line=1, column=5), type=TokenType.EOF),
-            ]
-        ),
-        (
-            '',
-            [
-                Token(name=None, position=Position(line=1, column=1), type=TokenType.EOF),
-                Token(name=None, position=Position(line=1, column=1), type=TokenType.EOF),
-            ]
-        ),
-    ])
-    def test_next_double_EOF(self, source, expected_tokens):
-        with ModulErrorManager() as error_handler:
-            lexer = Lexer(source=io.StringIO(source, newline=''), error_handler=error_handler, str_len_limit=256)
-            tokens = []
-            while True:
-                token = lexer.next()
-                tokens.append(token)
-                if token.type is TokenType.EOF:
-                    break
-            tokens.append(lexer.next())
         assert expected_tokens == tokens

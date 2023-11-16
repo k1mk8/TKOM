@@ -57,7 +57,10 @@ KEY_MAPPING = {
     'while': TokenType.WHILE_KEY,
     'break': TokenType.BREAK_KEY,
     'continue': TokenType.CONTINUE_KEY,
-    'return': TokenType.RETURN_KEY
+    'return': TokenType.RETURN_KEY,
+    'EUR' : TokenType.CURR,
+    'PLN' : TokenType.CURR,
+    'USD' : TokenType.CURR
 }
 
 SYMBOL_MAPPING = {
@@ -108,7 +111,8 @@ ESCAPE_CHARACTERS = {
     'n': b'\n',
     't': b'\t',
     'r': b'\r',
-    'b': b'\b'
+    'b': b'\b',
+    '\\': b'\\'
 }
 
 @dataclass
