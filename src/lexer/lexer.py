@@ -10,7 +10,6 @@ from tokkens.token import (
     Position,
     SYMBOL_MAPPING,
     OPERATOR_MAPPING,
-    BOOL_MAPPING,
     KEY_MAPPING,
     ESCAPE_CHARACTERS
 )
@@ -21,7 +20,6 @@ from error_manager.lexer_er import (
     UnknownTokens,
     NameTooLong,
     CommentTooLong,
-    UnexpectedEscapeCharacter,
     TooLongLine
 )
 
@@ -61,15 +59,19 @@ class Lexer(Lexer):
             self._current_position.column += 1
         self._character = self._source.read(1)
         if self._character in ['\n', '\r']:
+            self._build_next_line()
+
+    def _build_next_line(self):
+        if self._character in ['\n', '\r']:
             if self._newline_symbol is None:
                 newline_symbol = self._character
                 potential_newline = self._source.read(1)
                 if potential_newline in ['\n', '\r'] and newline_symbol + potential_newline in ['\r\n', '\n\r']:
-                    self._newline_symbol = (newline_symbol + potential_newline).encode('utf-8')
+                    self._newline_symbol = (newline_symbol + potential_newline)
                     self._character = '\n'
                     self._current_position.column = 1
                 elif newline_symbol == '\n':
-                    self._newline_symbol = '\n'.encode('utf-8')
+                    self._newline_symbol = '\n'
                     self._source.seek(self._source.tell() - 1)
             else:
                 newline_symbol = self._character
@@ -90,25 +92,30 @@ class Lexer(Lexer):
         self._next_character()
         return Token(value=value, position=self._token_start_position, type=type)
 
+    def _check_number_size(self, value):
+        decimal = int(self._character)
+        if (sys.maxsize - decimal) / 10 - value > 0:
+            value = value * 10 + decimal
+        else:
+            value = str(value)
+            while self._character.isdecimal() or self._character == '.':
+                value += self._character
+                self._next_character()
+            error = Overflow(position=self._token_start_position, name=value)
+            if not self._error_handler.save_error(error):
+                raise Exception('Error handler is full')
+            return False, value
+        return True, value
+    
     def _try_build_number(self):
         if not self._character.isdecimal():
             return None
-        error = None
         value = int(self._character)
         self._next_character()
         if value != 0:
             while self._character.isdecimal():
-                decimal = int(self._character)
-                if (sys.maxsize - decimal) / 10 - value > 0:
-                    value = value * 10 + decimal
-                else:
-                    value = str(value)
-                    while self._character.isdecimal() or self._character == '.':
-                        value += self._character
-                        self._next_character()
-                    error = Overflow(position=self._token_start_position, name=value) #TODO
-                    if not self._error_handler.save_error(error):
-                        raise Exception('Error handler is full')
+                size, value = self._check_number_size(value)
+                if not size:
                     return Token(value=value, position=self._token_start_position, type=TokenType.ERROR)
                 self._next_character()
         if not self._character == '.':
@@ -117,8 +124,9 @@ class Lexer(Lexer):
         fraction = 0
         self._next_character()
         while self._character.isdecimal():
-            decimal = int(self._character)
-            fraction = fraction * 10 + decimal
+            size, fraction = self._check_number_size(fraction)
+            if not size:
+                return Token(value=value, position=self._token_start_position, type=TokenType.ERROR)
             number_of_decimals += 1
             self._next_character()
         value = value + fraction * pow(10, -number_of_decimals)
@@ -131,21 +139,25 @@ class Lexer(Lexer):
         self._next_character()
         while self._character and (self._character.isalnum() or self._character == '_'):
             if len(identifier) == self._str_len_limit:
-                self._error_handling(identifier, 2)
-                return Token(value=''.join(identifier), position=self._token_start_position, type=TokenType.COMMENT)
+                error = NameTooLong(position=self._token_start_position, name=''.join(identifier[:20]))
+                if not self._error_handler.save_error(error):
+                    raise Exception('Error handler is full')
+                return Token(value=''.join(identifier), position=self._token_start_position, type=TokenType.ID)
             identifier.append(self._character)
             self._next_character()
         identifier = ''.join(identifier)
-        type = KEY_MAPPING.get(identifier, None) or BOOL_MAPPING.get(identifier, None) or TokenType.ID
+        type = KEY_MAPPING.get(identifier, None) or TokenType.ID
         return Token(value=identifier, position=self._token_start_position, type=type)
 
     def _try_build_comment(self):
         if self._character == '#':
             value = []
             self._next_character()
-            while self._character and self._character.encode() != self._newline_symbol:
+            while self._character and self._character != '\n':
                 if len(value) == self._str_len_limit:
-                    self._error_handling(value, 1)
+                    error = CommentTooLong(position=self._token_start_position, name=''.join(value[:20]))
+                    if not self._error_handler.save_error(error):
+                        raise Exception('Error handler is full')
                     return Token(value=''.join(value), position=self._token_start_position, type=TokenType.COMMENT)
                 value.append(self._character)
                 self._next_character()
@@ -162,9 +174,12 @@ class Lexer(Lexer):
         while self._character != '\'':
             if not self._character:
                 error = InfiniteString(position=self._token_start_position, name=None)
+                if not self._error_handler.save_error(error):
+                    raise Exception('Error handler is full')
                 break
             if len(literal) == self._str_len_limit:
-                self._error_handling(literal, 3)
+                error = StringTooLong(position=self._token_start_position, name=b''.join(literal[:20]))
+                self._error_handling(error)
                 break
             escaped_character = None
             if self._character == '\\':
@@ -177,9 +192,6 @@ class Lexer(Lexer):
             self._next_character()
         self._next_character()
         literal = b''.join(literal)
-        if error:
-            if not self._error_handler.save_error(error):
-                raise Exception('Error handler is full')
         return Token(value=literal, position=self._token_start_position, type=TokenType.STR)
 
     def _try_build_operator(self):
@@ -212,13 +224,7 @@ class Lexer(Lexer):
         self._next_character()
         return Token(value=value, position=self._token_start_position, type=TokenType.ERROR)
     
-    def _error_handling(self, value, flag):
-        if flag == 1:
-            error = CommentTooLong(position=self._token_start_position, name=''.join(value[:20]))
-        elif flag == 2:
-            error = NameTooLong(position=self._token_start_position, name=''.join(value[:20]))
-        elif flag == 3:
-            error = StringTooLong(position=self._token_start_position, name=b''.join(value[:20]))
+    def _error_handling(self, error):
         if not self._error_handler.save_error(error):
             raise Exception('Error handler is full')
         loop_count = 0

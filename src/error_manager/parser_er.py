@@ -1,8 +1,10 @@
 from error_manager.interface import Error
 
 class UnexpectedToken(Error):
+    def __init__(self, function_name):
+        self.function_name = function_name
     def __repr__(self):
-        return f'Unexpected token {self.name} in line {self.position.line}, column {self.position.column}'
+        return f'Unexpected token {self.name} while try parse {self.function_name} in line {self.position.line}, column {self.position.column}'
     
 class DuplicateDefinition(Error):
     def __repr__(self):

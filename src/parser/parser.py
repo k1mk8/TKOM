@@ -55,38 +55,40 @@ class Parser(Parser):
         while self._token.type is TokenType.COMMENT:
             self._token = self._lexer.next()
 
-    def _expect_object(self, method):
+    def _expect_object(self, method, method_name):
         if not (result := method()):
-            error = UnexpectedToken(position=self._token.position, value=self._token.value)
+            error = UnexpectedToken(position=self._token.position, name=self._token.value, function_name=method_name)
             self._error_handler.fatal_error(error)
         return result
 
-    def _consume_semi_colon(self):
+    def _parse_semi_colon(self):
         if self._token.type is not TokenType.SEMI_COLON:
-            error = MissingSemiColon(position=self._token.position, value=self._token.value)
-            self._error_handler.save_error(error)
+            error = MissingSemiColon(position=self._token.position, name=self._token.value)
+            if not self._error_handler.save_error(error):
+                raise Exception('Error handler is full')
         else:
             self._next_token()
 
-    def _consume_identifier(self):
+    def _parse_identifier(self):
         if self._token.type is not TokenType.ID:
-            error = ExpectingIdentifier(position=self._token.position, value=self._token.value)
+            error = ExpectingIdentifier(position=self._token.position, name=self._token.value)
             self._error_handler.fatal_error(error)
         value = self._token.value
         self._next_token()
         return value
 
-    def _consume_bracket(self, bracket_type):
+    def _parse_bracket(self, bracket_type):
         if self._token.type is not bracket_type:
-            error = MissingBracket(position=self._token.position, value=bracket_type.value)
-            self._error_handler.save_error(error)
+            error = MissingBracket(position=self._token.position, name=bracket_type.value)
+            if not self._error_handler.save_error(error):
+                raise Exception('Error handler is full')
         else:
             self._next_token()
 
     def _parse_program(self):
         functions = self._parse_function_definitions()
         if self._token.type is not TokenType.EOF:
-            error = UnexpectedToken(position=self._token.position, value=self._token.value)
+            error = UnexpectedToken(position=self._token.position, name=self._token.value)
             self._error_handler.fatal_error(error)
         return Program(position=Position(line=1, column=1), functions=functions)
 
@@ -96,14 +98,14 @@ class Parser(Parser):
             position = self._token.position
             function_name = self._token.value
             self._next_token()
-            self._consume_bracket(TokenType.ROUND_B_O)
+            self._parse_bracket(TokenType.ROUND_B_O)
             parameter_list = self._parse_parameter_list()
-            self._consume_bracket(TokenType.ROUND_B_C)
-            block = self._expect_object(self._parse_block)
+            self._parse_bracket(TokenType.ROUND_B_C)
+            block = self._expect_object(self._parse_block, 'function_definitions')
             fun = FunctionDefinition(position=position, name=function_name, parameters=parameter_list, block=block)
             dict_fun = functions.setdefault(function_name, fun)
             if dict_fun != fun:
-                error = DuplicateDefinition(position=position, value=function_name)
+                error = DuplicateDefinition(position=position, name=function_name)
                 self._error_handler.fatal_error(error)
         return functions
     
@@ -114,7 +116,7 @@ class Parser(Parser):
         arguments.append(node)
         while self._token.type is TokenType.COMMA:
             self._next_token()
-            node = self._expect_object(self._parse_expression)
+            node = self._expect_object(self._parse_expression, 'argument_list')
             arguments.append(node)
         return arguments
 
@@ -128,7 +130,7 @@ class Parser(Parser):
         while self._token.type is TokenType.COMMA:
             self._next_token()
             parameter_position = self._token.position
-            name = self._consume_identifier()
+            name = self._parse_identifier()
             parameters.append(IdentifierExpression(position=parameter_position, name=name))
         return parameters
 
@@ -138,7 +140,7 @@ class Parser(Parser):
         position = self._token.position
         self._next_token()
         statement_list = self._parse_statement_list()
-        self._consume_bracket(TokenType.BRACE_C)
+        self._parse_bracket(TokenType.BRACE_C)
         return Block(position=position, statements=statement_list)
 
     def _parse_statement_list(self):
@@ -160,7 +162,7 @@ class Parser(Parser):
         if not (variable_access := self._parse_variable_access()):
             return
         assignment = self._parse_assignment(left=variable_access)
-        self._consume_semi_colon()
+        self._parse_semi_colon()
         return assignment or variable_access
 
     def _parse_variable_access(self):
@@ -171,7 +173,7 @@ class Parser(Parser):
         nodes.append(node)
         while self._token.type is TokenType.DOT:
             self._next_token()
-            node = self._expect_object(self._parse_fun_call)
+            node = self._expect_object(self._parse_fun_call, 'variable_access')
             nodes.append(node)
         return VariableAccess(position=position, variable=nodes)
 
@@ -180,7 +182,7 @@ class Parser(Parser):
             return
         position = self._token.position
         self._next_token()
-        expression = self._expect_object(self._parse_expression)
+        expression = self._expect_object(self._parse_expression, 'assignment')
         return Assignment(position=position, left=left, right=expression)
 
     def _parse_fun_call(self):
@@ -194,7 +196,7 @@ class Parser(Parser):
         else:
             self._next_token()
             expression = self._parse_argument_list()
-            self._consume_bracket(TokenType.ROUND_B_C)
+            self._parse_bracket(TokenType.ROUND_B_C)
         if not expression and expression != []:
             return IdentifierExpression(name=name, position=position)
         return FunctionCall(name=name, position=position, arguments=expression)
@@ -204,17 +206,17 @@ class Parser(Parser):
             return
         position = self._token.position
         self._next_token()
-        self._consume_bracket(TokenType.ROUND_B_O)
+        self._parse_bracket(TokenType.ROUND_B_O)
         condition = self._parse_expression()
         if not condition:
-            error = UnexpectedToken(position=self._token.position, value=self._token.value)
+            error = UnexpectedToken(position=self._token.position, name=self._token.value)
             self._error_handler.fatal_error(error)
-        self._consume_bracket(TokenType.ROUND_B_C)
-        true_block = self._expect_object(self._parse_block)
+        self._parse_bracket(TokenType.ROUND_B_C)
+        true_block = self._expect_object(self._parse_block, 'if_statement_true_block')
         if self._token.type is not TokenType.ELSE_KEY:
             return IfStatement(position=position, condition=condition, true_block=true_block)
         self._next_token()
-        else_block = self._expect_object(self._parse_block)
+        else_block = self._expect_object(self._parse_block, 'if_statement_else_block')
         return IfStatement(position=position, condition=condition, true_block=true_block, else_block=else_block)
 
     def _parse_while_statement(self):
@@ -222,13 +224,13 @@ class Parser(Parser):
             return
         position = self._token.position
         self._next_token()
-        self._consume_bracket(TokenType.ROUND_B_O)
+        self._parse_bracket(TokenType.ROUND_B_O)
         condition = self._parse_expression()
         if not condition:
-            error = UnexpectedToken(position=self._token.position, value=self._token.value)
+            error = UnexpectedToken(position=self._token.position, name=self._token.value)
             self._error_handler.fatal_error(error)
-        self._consume_bracket(TokenType.ROUND_B_C)
-        block = self._expect_object(self._parse_block)
+        self._parse_bracket(TokenType.ROUND_B_C)
+        block = self._expect_object(self._parse_block, 'while_statement')
         return WhileStatement(position=position, condition=condition, true_block=block)
 
     def _parse_return_statement(self):
@@ -237,7 +239,7 @@ class Parser(Parser):
         position = self._token.position
         self._next_token()
         expression = self._parse_expression()
-        self._consume_semi_colon()
+        self._parse_semi_colon()
         return ReturnStatement(position=position, expression=expression)
 
     def _parse_break_statement(self):
@@ -245,7 +247,7 @@ class Parser(Parser):
             return
         position = self._token.position
         self._next_token()
-        self._consume_semi_colon()
+        self._parse_semi_colon()
         return BreakStatement(position=position)
 
     def _parse_continue_statement(self):
@@ -253,7 +255,7 @@ class Parser(Parser):
             return
         position = self._token.position
         self._next_token()
-        self._consume_semi_colon()
+        self._parse_semi_colon()
         return ContinueStatement(position=position)
 
     def _parse_expression(self):
@@ -262,7 +264,7 @@ class Parser(Parser):
             return
         while self._token.type is TokenType.OR:
             self._next_token()
-            right = self._expect_object(self._parse_or_operand)
+            right = self._expect_object(self._parse_or_operand, 'expression')
             left = OrExpression(position=position, left=left, right=right)
         return left
 
@@ -272,7 +274,7 @@ class Parser(Parser):
             return
         while self._token.type is TokenType.AND:
             self._next_token()
-            right = self._expect_object(self._parse_and_operand)
+            right = self._expect_object(self._parse_and_operand, 'or_operand')
             left = AndExpression(position=position, left=left, right=right)
         return left
 
@@ -284,8 +286,8 @@ class Parser(Parser):
             self._next_token()
         node = self._parse_comparison()
         if negated and not node:
-            error = ExpectingExpression(position=self._token.position, value=self._token.value)
-            self._error_handler.raise_critical_error(error)
+            error = ExpectingExpression(position=self._token.position, name=self._token.value)
+            self._error_handler.fatal_error(error)
         if not negated and not node:
             return
         return NegatedExpression(position=position, left='!', right=node) if negated else node
@@ -298,7 +300,7 @@ class Parser(Parser):
         if not operator:
             return left
         self._next_token()
-        right = self._expect_object(self._parse_additive_expression)
+        right = self._expect_object(self._parse_additive_expression, 'comparison')
         return Comparison(operator=operator, position=position, left=left, right=right)
 
     def _parse_additive_expression(self):
@@ -307,7 +309,7 @@ class Parser(Parser):
             return
         while expression := ADDITIVE_OPERATOR_MAPPING.get(self._token.type):
             self._next_token()
-            right = self._expect_object(self._parse_multiplicative_expression)
+            right = self._expect_object(self._parse_multiplicative_expression, 'additive_expression')
             left = expression(position=position, left=left, right=right)
         return left
 
@@ -317,7 +319,7 @@ class Parser(Parser):
             return
         while expression := MULTIPLICATIVE_OPERATOR_MAPPING.get(self._token.type):
             self._next_token()
-            right = self._expect_object(self._parse_factor)
+            right = self._expect_object(self._parse_factor, 'multiplicative_expression')
             left = expression(position=position, left=left, right=right)
         return left
 
@@ -327,7 +329,7 @@ class Parser(Parser):
             return
         while self._token.type is TokenType.POWER or self._token.type is TokenType.TRANSFER:
             self._next_token()
-            right = self._expect_object(self._parse_exponent_factor)
+            right = self._expect_object(self._parse_exponent_factor, 'factor')
             left = ExponentialExpression(position=position, left=left, right=right)
         return left
 
@@ -339,7 +341,7 @@ class Parser(Parser):
             self._next_token()
         node = self._parse_numeric_operand()
         if negated and not node:
-            error = ExpectingExpression(position=self._token.position, value=self._token.value)
+            error = ExpectingExpression(position=self._token.position, name=self._token.value)
             self._error_handler.fatal_error(error)
         if not negated and not node:
             return
@@ -364,8 +366,8 @@ class Parser(Parser):
         if self._token.type is not TokenType.ROUND_B_O:
             return
         self._next_token()
-        expression = self._expect_object(self._parse_expression)
-        self._consume_bracket(TokenType.ROUND_B_C)
+        expression = self._expect_object(self._parse_expression, 'bracket_expression')
+        self._parse_bracket(TokenType.ROUND_B_C)
         return expression
 
 #

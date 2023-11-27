@@ -60,7 +60,9 @@ KEY_MAPPING = {
     'return': TokenType.RETURN_KEY,
     'EUR' : TokenType.CURR,
     'PLN' : TokenType.CURR,
-    'USD' : TokenType.CURR
+    'USD' : TokenType.CURR,
+    'true': TokenType.BOOL_T,
+    'false': TokenType.BOOL_F
 }
 
 SYMBOL_MAPPING = {
@@ -102,17 +104,13 @@ CONSTANT_TOKENS = [
     TokenType.CURR
 ]
 
-BOOL_MAPPING = {
-    'true': TokenType.BOOL_T,
-    'false': TokenType.BOOL_F
-}
-
 ESCAPE_CHARACTERS = {
     'n': b'\n',
     't': b'\t',
     'r': b'\r',
     'b': b'\b',
-    '\\': b'\\'
+    '\\': b'\\',
+    '\'': b'\''
 }
 
 @dataclass

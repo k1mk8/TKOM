@@ -6,7 +6,7 @@ from tokkens.token import TokenType, Token, Position
 from error_manager.error_manager import ModulErrorManager
 
 
-class TestLangLexer:
+class TestLexer:
     @pytest.mark.parametrize('source, expected_token', [
         ('', Token(value=None, position=Position(line=1, column=1), type=TokenType.EOF)),
         ('\n ', Token(value=None, position=Position(line=2, column=2), type=TokenType.EOF)),
