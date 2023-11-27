@@ -260,25 +260,25 @@ class Parser(Parser):
 
     def _parse_expression(self):
         position = self._token.position
-        if not (left := self._parse_or_operand()):
+        if not (left := self._parse_or_term()):
             return
         while self._token.type is TokenType.OR:
             self._next_token()
-            right = self._expect_object(self._parse_or_operand, 'expression')
+            right = self._expect_object(self._parse_or_term, 'expression')
             left = OrExpression(position=position, left=left, right=right)
         return left
 
-    def _parse_or_operand(self):
+    def _parse_or_term(self):
         position = self._token.position
-        if not (left := self._parse_and_operand()):
+        if not (left := self._parse_and_term()):
             return
         while self._token.type is TokenType.AND:
             self._next_token()
-            right = self._expect_object(self._parse_and_operand, 'or_operand')
+            right = self._expect_object(self._parse_and_term, 'or_operand')
             left = AndExpression(position=position, left=left, right=right)
         return left
 
-    def _parse_and_operand(self):
+    def _parse_and_term(self):
         position = self._token.position
         negated = False
         if self._token.type is TokenType.NOT:

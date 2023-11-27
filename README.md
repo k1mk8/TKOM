@@ -89,7 +89,7 @@ Deklaracja zmiennych może odbywać się w dowolnym funckji w programie. Jednak 
 - parameter_list			= id, {",", id};
 - block                     = "{", {statement}, "}"
 - statement                 = variable_access | function_call, ";", | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
-- variable_access 			= id, ".", id;
+- variable_access 			= function_call, ".", function_call;
 - assignment               	= id, "=", expression;
 - function_call             = id, ["(", [argument_list], ")"];
 - if_statement              = "if", "(", expression, ")", block, ["else", block];
@@ -101,9 +101,9 @@ Deklaracja zmiennych może odbywać się w dowolnym funckji w programie. Jednak 
 - comparison				= additive_expression, [("==" | "!=" | ">=" | "<=" | "<" | ">"), additive_expression];
 - additive_expression       = multiplicative_expression, {"+" | "-"}, multiplicative_expression;
 - multiplicative_expression	= factor, {"*" | "/"}, factor;
-- factor					= [-], exponent_factor, {"^", exponent_factor};
-- exponent_factor			= numeric_term, "->" [variable_access | currency_id];
-- numeric_term				= constant | "(", expression, ")" | function_call;
+- factor					= exponent_factor, {("^" | "->"), exponent_factor};
+- exponent_factor			= [-], numeric_term;
+- numeric_term				= constant | "(", expression, ")" | variable_access;
 - constant 					= num_const | bool_const | string_const | currency_const;
 - currency_const			= num_const , currency_id;
 - num_const					= non_zero_digit, {digit}, [".", {digit}];
