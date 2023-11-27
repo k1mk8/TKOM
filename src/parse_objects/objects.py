@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass, field
 from enum import StrEnum, auto
-from typing import Any, Self, Optional, Callable
+from typing import Any, Self, Optional
 
 from tokkens.token import Position, TokenType
 
@@ -128,17 +128,14 @@ class Assignment(Statement):
     left: VariableAccess
     right: Expression
 
+
 @dataclass
-class IdentifierFunCall(Node):
+class IdentifierExpression(Node):
     name: str
 
 
-class IdentifierExpression(IdentifierFunCall):
-    ...
-
-
 @dataclass
-class FunctionCall(IdentifierFunCall):
+class FunctionCall(IdentifierExpression):
     arguments: list[Expression] = field(default_factory=lambda: [])
 
 
