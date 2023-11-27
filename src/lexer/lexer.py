@@ -1,3 +1,4 @@
+
 import sys
 
 from copy import copy
@@ -227,3 +228,12 @@ class Lexer(Lexer):
         if loop_count ==  4 * self._str_len_limit:
             error = TooLongLine(position=self._token_start_position, value=None)
             self._error_handler.fatal_error(error)
+
+#
+#In this code, the `Lexer` class is responsible for tokenizing the input source code. It uses a finite state machine approach to identify and categorize different types of tokens. The `_try_build_*` methods are responsible for recognizing and constructing specific types of tokens.
+#
+#The `_next_character` method is used to advance the lexer's position in the input source code and update the current character accordingly.
+#
+#The `_error_handling` method is used to handle errors that may occur during the tokenization process. It creates an appropriate error object and passes it to the error handler for further processing.
+#
+#The `next` method is the main entry point for the lexer. It calls the `_try_build_*` methods in a specific order to attempt to construct a token. If a token is successfully constructed, it is returned. Otherwise, the lexer continues to the next `_try_build_*` method.

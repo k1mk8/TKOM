@@ -1,4 +1,4 @@
-from error_manager.interface import Error, FatalError
+from error_manager.interface import Error
     
 class Overflow(Error):
     def __repr__(self):
@@ -28,6 +28,6 @@ class UnexpectedEscapeCharacter(Error):
     def __repr__(self):
         return f'Name {self.name} is not recognized as escape character in line {self.position.line}, column {self.position.column}'
 
-class TooLongLine(FatalError):
+class TooLongLine(Error):
     def __repr__(self):
         return f'{self.position.line} is too long without any Token'                
