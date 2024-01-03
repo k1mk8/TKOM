@@ -1,0 +1,12 @@
+main()
+{
+    var_int = 5;
+	var_bool = true;
+	var_float = 5.5;
+	var_string = 'string';
+
+	print(var_int); # 5
+	print(var_bool); # true
+	print(var_float); # 5.5
+	print(var_string); # string
+}

@@ -1,0 +1,13 @@
+func(x)
+{
+	x = x + 5;
+}
+
+main()
+{
+	y = 4;
+	func(y); # y = 9;
+    print(y);
+	z = y * 4; # z = 36;
+    print(z);
+}

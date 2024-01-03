@@ -1,0 +1,11 @@
+func(x)
+{
+	return x * x;
+}
+
+main()
+{
+	y = 5;
+	result = func(y);
+	print(result); # 25
+}

@@ -203,11 +203,16 @@ class Lexer(Lexer):
         elif self._character in ['=', '>', '<', '!', '&', '|', '-']:
             operator = self._character
             self._next_character()
-            operator = operator + self._character if self._character else operator
-            operator_type = OPERATOR_MAPPING.get(operator, None)
+            possible_operator = operator + self._character if self._character else operator
+            operator_type = OPERATOR_MAPPING.get(possible_operator, None)
             if operator_type:
                 self._next_character()
-                return Token(value=operator, position=self._token_start_position, type=operator_type)
+                return Token(value=possible_operator, position=self._token_start_position, type=operator_type)
+            else:
+                operator_type = OPERATOR_MAPPING.get(operator, None)
+                if operator_type:
+                    self._next_character()
+                    return Token(value=operator, position=self._token_start_position, type=operator_type)
             self._next_character()
             error = UnknownTokens(position=self._token_start_position, name=operator)
             if not self._error_handler.save_error(error):

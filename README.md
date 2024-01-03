@@ -88,7 +88,7 @@ Deklaracja zmiennych może odbywać się w dowolnym funckji w programie. Jednak 
 - argument_list				= expression, {",", expression};
 - parameter_list			= id, {",", id};
 - block                     = "{", {statement}, "}"
-- statement                 = variable_access | function_call, ";", | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
+- statement                 = variable_access | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
 - variable_access 			= function_call, ".", function_call;
 - assignment               	= id, "=", expression;
 - function_call             = id, ["(", [argument_list], ")"];
@@ -127,7 +127,7 @@ main()
 	var_int = 5;
 	var_bool = true;
 	var_float = 5.5;
-	var_string = "string";
+	var_string = 'string';
 }
 ```
 ### Wypisywanie wartości 
@@ -145,8 +145,8 @@ main()
 ```
 main()
 {
-	str = "poczatek";
-	str2 = "koniec";
+	str = 'poczatek';
+	str2 = 'koniec';
 	str3 = str + str2;
 	print(str3); # poczatekkoniec
 	print(str + str2); # poczatekkoniec
@@ -200,7 +200,7 @@ main()
 func(x)
 {
 	if(x > 5){
-		func(x-1);
+		func(x - 1);
 	}
 	return 10;
 }
@@ -274,12 +274,12 @@ main()
 main()
 {
 	x = 5;
-	y = "abc";
-	yy = "xyz";
+	y = 'abc';
+	yy = 'xyz';
 	z = 5.5;
 
 	b = y + yy;
-	c = "abcxyz";
+	c = 'abcxyz';
 	if(b == c)
 	{
 		print(x);
@@ -304,7 +304,7 @@ main()
 main()
 {
 	x = 5;
-	y = "ABC";
+	y = 'ABC';
 	if(x > y)
 	{
 		print(1);
@@ -316,7 +316,7 @@ main()
 ```
 main()
 {
-	x = "5;
+	x = '5;
 	print(x);
 }
 ```

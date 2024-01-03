@@ -1,0 +1,4 @@
+main()
+{
+	print("Przykładowy tekst\""); # Przykładowy tekst"
+}
