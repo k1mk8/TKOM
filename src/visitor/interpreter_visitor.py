@@ -13,10 +13,8 @@ from error_manager.interpreter_er import (
     FunctionNotFound,
     DivisionByZero
 )
-from parse_objects.objects import ExternalFunction
+from parse_objects.objects import BuiltInFunction
 from interpreter.calculations import Calculations
-from interpreter.builtin_functions import BUILTINS_LIST
-
 
 class InterpreterVisitor(Visitor):
     def __init__(self, error_manager):
@@ -38,7 +36,7 @@ class InterpreterVisitor(Visitor):
 
     def _insert_builtin_functions(self):
         for function in BUILTINS_LIST:
-            function_obj = ExternalFunction(position=None, name=function[0], function=function[1])
+            function_obj = BuiltInFunction(position=None, name=function[0], function=function[1])
             self._global_context.insert_symbol(function[0], function_obj)
 
     def _get_left_right_expressions(self, expression):
@@ -55,7 +53,7 @@ class InterpreterVisitor(Visitor):
         main_function = self._global_context.get_value('main')
         if not main_function:
             error = NoMainFunction(position=None, name=None)
-            self._error_manager.fatal_error_error(error)
+            self._error_manager.fatal_error(error)
         main_function.accept(self)
 
     def visit_function_definition(self, function_definition):
@@ -154,10 +152,18 @@ class InterpreterVisitor(Visitor):
             left.value, right.value, expression, lambda a, b: a / b
         )
 
-    def visit_exp_expression(self, expression):
+    def visit_pow_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
+        print(expression.right.value)
         self._last_result = self._calculations_handler.calculate_result(
-            left.value, right.value, expression, lambda a, b: a + b
+            left.value, right.value, expression, lambda a, b: pow(a, b)
+        )
+
+    def visit_tran_expression(self, expression):
+        left, right = self._get_left_right_expressions(expression)
+        print(expression.right.value)
+        self._last_result = self._calculations_handler.calculate_result(
+            left.value, right.value, expression, lambda a, b: a ^ b
         )
 
     def visit_negated_expression(self, negated):
@@ -238,6 +244,14 @@ class InterpreterVisitor(Visitor):
         function.accept(self)
         self._call_context = self._last_contexts.pop()
 
-    def visit_external_function(self, ext_function: ExternalFunction):
+    def visit_external_function(self, ext_function):
         arguments = self._consume_last_result() or []
         self._last_result = ext_function.function(*[argument.value for argument in arguments])
+
+def bytes_print(text):
+    print(text.decode() if isinstance(text, bytes) else text)
+
+BUILTINS_LIST = [
+    ('print', bytes_print),
+    ('input', input)
+]

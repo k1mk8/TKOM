@@ -1,4 +1,5 @@
 main()
 {
-	print("Przykładowy tekst\""); # Przykładowy tekst"
+	a = 20 USD;
+	print(a);
 }

@@ -1,5 +1,6 @@
 
 from lexer.interface import Lexer
+from currency.currency import Currency
 from parser.interface import Parser
 from tokkens.token import TokenType, Token, CONSTANT_TOKENS, Position
 from parse_objects.objects import (
@@ -22,14 +23,13 @@ from parse_objects.objects import (
     AndExpression,
     Comparison,
     NegatedExpression,
-    ExponentialExpression,
     Constant,
     TOKEN_TYPE_OPERATOR_MAPPING,
     ADDITIVE_OPERATOR_MAPPING,
     MULTIPLICATIVE_OPERATOR_MAPPING,
+    FACTOR_OPERATOR_MAPPING,
     BOOL_VALUE_MAPPING
 )
-from error_manager.interface import ErrorManager
 from error_manager.parser_er import (
     UnexpectedToken,
     MissingSemiColon,
@@ -327,10 +327,10 @@ class Parser(Parser):
         position = self._token.position
         if not (left := self._parse_exponent_factor()):
             return
-        while self._token.type is TokenType.POWER or self._token.type is TokenType.TRANSFER:
+        while expression := FACTOR_OPERATOR_MAPPING.get(self._token.type):
             self._next_token()
             right = self._expect_object(self._parse_exponent_factor, 'factor')
-            left = ExponentialExpression(position=position, left=left, right=right)
+            left = expression(position=position, left=left, right=right)
         return left
 
     def _parse_exponent_factor(self):
@@ -358,6 +358,16 @@ class Parser(Parser):
         if self._token.type not in CONSTANT_TOKENS:
             return
         bool_value = BOOL_VALUE_MAPPING.get(self._token.type)
+        if self._token.type in [TokenType.INT, TokenType.FLOAT]:
+            value = self._token.value
+            position = self._token.position
+            self._next_token()
+            if self._token.type == TokenType.CURR:
+                node = Currency(symbol=self._token.value, value=value, position=position)
+                self._next_token()
+                return node
+            else:
+                return Constant(value=value, position=position)
         node = Constant(value=bool_value if bool_value is not None else self._token.value, position=self._token.position)
         self._next_token()
         return node

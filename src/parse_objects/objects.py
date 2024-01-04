@@ -4,7 +4,6 @@ from enum import StrEnum, auto
 from typing import Any, Self, Optional, Callable
 
 from tokkens.token import Position, TokenType
-from visitor.interface import Visitor
 
 
 class Operator(StrEnum):
@@ -44,60 +43,64 @@ class Expression(Node):
     left: Self
     right: Self
 
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_expression(self)
 
 
 class OrExpression(Expression):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_or_expression(self)
 
 class AndExpression(Expression):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_and_expression(self)
 
 
 @dataclass
 class Comparison(Expression):
     operator: Operator
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_comparison(self)
 
 
 class NegatedExpression(Expression):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_negated_expression(self)
 
 
 class AddExpression(Expression):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_add_expression(self)
 
 
 class SubExpression(Expression):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_sub_expression(self)
 
 
 class MulExpression(Expression):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_mul_expression(self)
 
 
 class DivExpression(Expression):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_div_expression(self)
 
 
-class ExponentialExpression(Expression):
-    def accept(self, visitor: type[Visitor]):
-        visitor.visit_exp_expression(self)
+class PowExpression(Expression):
+    def accept(self, visitor):
+        visitor.visit_pow_expression(self)
+
+class TranExpression(Expression):
+    def accept(self, visitor):
+        visitor.visit_tran_expression(self)
 
 
 @dataclass
 class Constant(Node):
     value: Any
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_constant(self)
 
 
@@ -108,7 +111,7 @@ class Statement(Node):
 @dataclass
 class Block(Node):
     statements: list[Statement] = field(default_factory=lambda: [])
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_block(self)
 
 
@@ -117,37 +120,37 @@ class IfStatement(Statement):
     condition: Expression
     true_block: Block
     else_block: Optional[Block] = None
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_if_stmt(self)
 
 @dataclass
 class WhileStatement(Statement):
     condition: Expression
     true_block: Block
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_while_stmt(self)
 
 
 @dataclass
 class ReturnStatement(Statement):
     expression: Optional[Expression] = None
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_return_stmt(self)
 
 class BreakStatement(Statement):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_break_stmt(self)
 
 
 class ContinueStatement(Statement):
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_continue_stmt(self)
 
 
 @dataclass
 class VariableAccess(Statement):
     variable: list[Expression] = field(default_factory=lambda: [])
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_variable_access(self)
 
 
@@ -155,29 +158,28 @@ class VariableAccess(Statement):
 class Assignment(Statement):
     left: VariableAccess
     right: Expression
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_assignment(self)
 
 
 @dataclass
 class IdentifierExpression(Node):
     name: str
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_identifier_expression(self)
 
 @dataclass
-class ExternalFunction(Node):
+class BuiltInFunction(Node):
     name: str
     function: Callable
-    parameters: list[IdentifierExpression] = field(default_factory=lambda: [])
 
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_external_function(self)
 
 @dataclass
 class FunctionCall(IdentifierExpression):
     arguments: list[Expression] = field(default_factory=lambda: [])
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_function_call(self)
 
 
@@ -186,14 +188,14 @@ class FunctionDefinition(Node):
     name: str
     block: Block
     parameters: list[IdentifierExpression] = field(default_factory=lambda: [])
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_function_definition(self)
 
 
 @dataclass
 class Program(Node):
     functions: dict[str, FunctionDefinition]
-    def accept(self, visitor: type[Visitor]):
+    def accept(self, visitor):
         visitor.visit_program(self)
 
 
@@ -206,6 +208,11 @@ ADDITIVE_OPERATOR_MAPPING = {
 MULTIPLICATIVE_OPERATOR_MAPPING = {
     TokenType.MULTIPLICATION: MulExpression,
     TokenType.DIVISION: DivExpression
+}
+
+FACTOR_OPERATOR_MAPPING = {
+    TokenType.POWER: PowExpression,
+    TokenType.TRANSFER: TranExpression
 }
 
 # In this code, we define a class hierarchy for an abstract syntax tree (AST) of a simple programming language. The AST represents the structure of the code and is used by the interpreter or compiler to analyze and execute the code.

@@ -7,5 +7,5 @@ class Visitor(metaclass=ABCMeta):
 
 class Visitable(metaclass=ABCMeta):
     @abstractmethod
-    def accept(visitor: type[Visitor]):
+    def accept(visitor):
         ...
