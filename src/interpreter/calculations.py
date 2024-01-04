@@ -4,9 +4,11 @@ from parse_objects.objects import (
     AddExpression,
 )
 from interpreter.reference import Reference
+from currency.config import exchange_rates
 
 NUMBER_TYPES = [int, float]
 STR_TYPES = [str, bytes]
+CURRENCY = ["EUR", "PLN", "USD"]
 NUMBER_OPERATOR_MAPPING = {
     Operator.EQ: lambda a, b: a == b,
     Operator.NE: lambda a, b: a != b,
@@ -44,19 +46,27 @@ class Calculations:
             self._error_manager.fatal_error(error)
         return Reference(value=result)
 
-    def calculate_result(self, left, right, expression, method):
+    def calculate_result(self, left, left_symbol, right, right_symbol, expression, method):
         self._left = left
         self._right = right
+        self._left_symbol = left_symbol
+        self._right_symbol = right_symbol
         self._position = expression.position
         self._concatenating = isinstance(expression, AddExpression)
         self._method = method
-        result = self._try_calculate_numbers()
+        result = None
+        if left_symbol != right_symbol and left_symbol is not None and right_symbol is not None or right in CURRENCY:
+            result = self._try_transfer_currency()
+        if result is None:
+            result = self._try_calculate_numbers()
         if result is None:
             result = self._try_concatenate_strings()
         if result is None:
             error = WrongTypeForOperation(position=expression.position, name=(type(self._left), type(self._right)))
             self._error_manager.fatal_error(error)
-        return Reference(value=result)
+        if method == "tran":
+            return Reference(value=result, symbol=self._right_symbol)
+        return Reference(value=result, symbol=left_symbol)
 
     def negate_value(self, right, expression):
         self._right = right
@@ -102,6 +112,17 @@ class Calculations:
         if type(self._left) not in NUMBER_TYPES or type(self._right) not in NUMBER_TYPES:
             return
         return self._method(self._left, self._right)
+    
+    def _try_transfer_currency(self):
+        if self._method == "tran":
+            if self._right in CURRENCY:
+                exchange = exchange_rates[self._left_symbol][self._right]
+                self._right_symbol = self._right
+                return self._left * exchange
+            exchange = exchange_rates[self._left_symbol][self._right_symbol]
+            return self._left * exchange
+        exchange = exchange_rates[self._right_symbol][self._left_symbol]
+        return self._method(self._left, self._right * exchange)
 
     def _try_concatenate_strings(self):
         if type(self._left) not in STR_TYPES or type(self._right) not in STR_TYPES or not self._concatenating:

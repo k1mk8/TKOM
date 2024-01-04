@@ -5,5 +5,3 @@ from dataclasses import dataclass
 @dataclass
 class Currency(Constant):
     symbol: Any
-    def __repr__(self):
-        return f"{self.value} {self.symbol}"

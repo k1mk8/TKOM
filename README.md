@@ -9,6 +9,10 @@ Język z typem walutowym
 
 Opiekun projektu: dr inż. Piotr Gawkowski
 
+## Uruchomienie projektu
+
+Aby prawidłowo uruchomić projekt należy wpisać w terminal komende: python3.11 src/main.py {ścieżka do pliku} znajdując sie w głównym folderze projektu.
+
 ## Założenia podstawowe
 - dynamicznie typowany
 - słabo typowany
@@ -36,7 +40,7 @@ Opiekun projektu: dr inż. Piotr Gawkowski
 - obsługa operatorów arytmetycznych +,-,*,/,^
 - obsługa operatorów porównujących <,>,<=,>=,==,!=
 - obsługa operatorów logicznych ||, &&, !
-- operator przewalutowania ->, priorytet na poziomie priorytetu operatora negacji
+- operator przewalutowania ->, priorytet na poziomie priorytetu operatora potęgowania
 - pobieranie aktualnych kursów walutowych ze strony i tworzenie macierzy pomiędzy nimi (macierz będzie zawierać informacje o kursie przewalutowania pomiędzy konkretnymi walutami)
 
 
@@ -323,7 +327,7 @@ main()
 
 ## Obsługa błędów
 
-W przypadku napotkania błędu podczas pracy lexera/parsera/interpretera, error manager agreguje i dzieli błędy na krytyczne i niekrytyczne. Error manager będzie przekazywany do modułów w konstruktorze. Error manager będzie W momencie napotkania błędu krytycznego podniesiony zostanie wyjątek, który będzie obsłużony na zewnątrz, natomiast gdy błąd jest niekrytyczny, użytkownik otrzyma informację o jego wystąpieniu, jednak program może dalej wykonywać się poprawnie.
+W przypadku napotkania błędu podczas pracy lexera/parsera/interpretera, error manager agreguje i dzieli błędy na krytyczne i niekrytyczne. Error manager będzie przekazywany do modułów w konstruktorze. Error manager w momencie napotkania błędu krytycznego podniesie wyjątek, który będzie obsłużony na zewnątrz, natomiast gdy błąd jest niekrytyczny, użytkownik otrzyma informację o jego wystąpieniu, jednak program może dalej wykonywać się poprawnie.
 
 ### Lekser:
 #### Niekrytyczne
@@ -359,7 +363,7 @@ W przypadku napotkania błędu podczas pracy lexera/parsera/interpretera, error 
 - Testy - przy użyciu pytest
 - Error Manager - obsługa błędów w kodzie
 
-Interface pomiędzy lekserem, a parserem będzie wyglądał w następujący sposób. Główny plik stworzy konieczne obiekty (lexer, parser itp.), a następnie wywoła metodę parse(), która spowoduje przechodzenie przez plik tekstowy otrzymany do interpretacji i przetworzy na bieżąco otrzymane tokeny w drzewo AST. Gdy praca z aktualnym tokenem zakończy się, wykonana zostanie metoda next() w lekserze. Dzięki temu uzyskamy leniwą tokenizację. Każdy z modułów może również zgłosić błąd, przy użyciu obiektu ErrorManagera.
+Interface pomiędzy lekserem, a parserem będzie wyglądał w następujący sposób. Główny plik stworzy konieczne obiekty (lexer, parser itp.), a następnie wywoła metodę parse(), która spowoduje przechodzenie przez plik tekstowy otrzymany do interpretacji i przetworzy na bieżąco otrzymane tokeny w drzewo AST. Gdy praca z aktualnym tokenem zakończy się, wykonana zostanie metoda next() w lekserze. Dzięki temu uzyskamy leniwą tokenizację. Każdy z modułów może również zgłosić błąd, przy użyciu obiektu ErrorManagera. Został zaimplementowany również oddzielny moduł, którego zadaniem jest wykonywanie obliczeń podanych przez interpreter w czasie przetwarzania pliku wejściowego. Obsługuje on operacje dla wszystkich typó zmiennych (waluta, int, string, bool).
 
 
 ## Testowanie

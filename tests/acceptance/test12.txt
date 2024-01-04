@@ -1,0 +1,5 @@
+main()
+{
+	a = 20 USD;
+	print(a -> EUR);
+}
