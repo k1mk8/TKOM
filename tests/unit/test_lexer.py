@@ -161,12 +161,6 @@ class TestLexer:
         ('~', Token(value='~', position=Position(line=1, column=1), type=TokenType.ERROR)),
         ('"', Token(value='"', position=Position(line=1, column=1), type=TokenType.ERROR)),
         (':', Token(value=':', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('|', Token(value='|', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('&', Token(value='&', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('|&', Token(value='|&', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('&|', Token(value='&|', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('%', Token(value='%', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('@', Token(value='@', position=Position(line=1, column=1), type=TokenType.ERROR)),
     ])
     def test_next_unknown(self, source, expected_token):
         with ModulErrorManager() as error_handler:

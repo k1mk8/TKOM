@@ -4,4 +4,6 @@ main()
 	var_bool = true;
 	var_float = 5.5;
 	var_string = 'string';
+
+	print(var_int);
 }

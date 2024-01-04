@@ -51,7 +51,7 @@ class InterpreterVisitor(Visitor):
         for function in program.functions.values():
             self._global_context.insert_symbol(function.name, function)
         self._insert_builtin_functions()
-        main_function = self._global_context.get_value('main')
+        main_function = self._global_context.get_value('main') ## TODO call like normal function
         if not main_function:
             error = NoMainFunction(position=None, name=None)
             self._error_manager.fatal_error(error)
@@ -60,7 +60,7 @@ class InterpreterVisitor(Visitor):
     def visit_function_definition(self, function_definition):
         arguments = self._consume_last_result() or []
         if len(arguments) != len(function_definition.parameters):
-            error = NotExactArguments(position=function_definition.position)
+            error = NotExactArguments(position=function_definition.position) ## TODO add call position
             self._error_manager.fatal_error(error)
         for argument, parameter in zip(arguments, function_definition.parameters):
             self._call_context.insert_symbol(parameter.name, argument)
@@ -103,7 +103,7 @@ class InterpreterVisitor(Visitor):
             if self._breaking or self._returning:
                 self._breaking = False
                 break
-            if self._continuing:
+            if self._continuing: ## TODO destroy continue outside the while statement
                 self._continuing = False
             statement.condition.accept(self)
             execute = self._consume_last_result()
@@ -129,19 +129,19 @@ class InterpreterVisitor(Visitor):
     def visit_add_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
         self._last_result = self._calculations_handler.calculate_result(
-            left.value, left.symbol, right.value, right.symbol, expression, lambda a, b: a + b
+            left.value, right.value, expression, lambda a, b: a + b
         )
 
     def visit_sub_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
         self._last_result = self._calculations_handler.calculate_result(
-            left.value, left.symbol, right.value, right.symbol, expression, lambda a, b: a - b
+            left.value, right.value, expression, lambda a, b: a - b
         )
 
     def visit_mul_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
         self._last_result = self._calculations_handler.calculate_result(
-            left.value, left.symbol, right.value, right.symbol, expression, lambda a, b: a * b
+            left.value, right.value, expression, lambda a, b: a * b
         )
 
     def visit_div_expression(self, expression):
@@ -150,20 +150,19 @@ class InterpreterVisitor(Visitor):
             error = DivisionByZero(position=expression.position, name=None)
             self._error_manager.fatal_error(error)
         self._last_result = self._calculations_handler.calculate_result(
-            left.value, left.symbol, right.value, right.symbol, expression, lambda a, b: a / b
+            left.value, right.value, expression, lambda a, b: a / b
         )
 
     def visit_pow_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
-        print(expression.right.value)
         self._last_result = self._calculations_handler.calculate_result(
-            left.value, left.symbol, right.value, right.symbol, expression, lambda a, b: pow(a, b)
+            left.value, right.value, expression, lambda a, b: pow(a, b)
         )
 
     def visit_tran_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
         self._last_result = self._calculations_handler.calculate_result(
-            left.value, left.symbol, right.value, right.symbol, expression, "tran"
+            left.value, right.value, expression, "tran"
         )
 
     def visit_negated_expression(self, negated):
@@ -180,7 +179,7 @@ class InterpreterVisitor(Visitor):
         expression.right.accept(self)
         right = self._consume_last_result()
         self._last_result = self._calculations_handler.handle_relations(
-            left.value, left.symbol, right.value, right.symbol, expression, lambda a, b: a or b
+            left.value, right.value, expression, lambda a, b: a or b
         )
 
     def visit_and_expression(self, expression):
@@ -192,12 +191,12 @@ class InterpreterVisitor(Visitor):
         expression.right.accept(self)
         right = self._consume_last_result()
         self._last_result = self._calculations_handler.handle_relations(
-            left.value, left.symbol, right.value, right.symbol, expression, lambda a, b: a and b
+            left.value, right.value, expression, lambda a, b: a and b
         )
 
     def visit_constant(self, constant):
         if isinstance(constant, Currency):
-            self._last_result = Reference(value=constant.value, symbol=constant.symbol)
+            self._last_result = Reference(value=constant)
         else:
             self._last_result = Reference(value=constant.value)
 
@@ -222,12 +221,11 @@ class InterpreterVisitor(Visitor):
         self._resolving = True
         assignment.right.accept(self)
         value = self._consume_last_result()
-        symbol = value.symbol
-        value = value.value if isinstance(value, Reference) else value
+        value = value
         old_value = self._call_context.get_value(variable_name)
         if old_value is None:
             self._call_context.insert_symbol(
-                variable_name, value if isinstance(value, Reference) else Reference(value=value, symbol=symbol)
+                variable_name, value
             )
         else:
             old_value.value = value
@@ -237,7 +235,7 @@ class InterpreterVisitor(Visitor):
         for argument in fun_call.arguments:
             argument.accept(self)
             value = self._consume_last_result()
-            arguments.append(value if isinstance(value, Reference) else Reference(value=value))
+            arguments.append(value)
         self._last_result = arguments
         function = self._global_context.get_value(fun_call.name)
         if function is None:
@@ -249,11 +247,8 @@ class InterpreterVisitor(Visitor):
         self._call_context = self._last_contexts.pop()
 
     def visit_external_function(self, ext_function):
-        arguments = self._consume_last_result()
-        if arguments[0].symbol is not None:
-            self._last_result = ext_function.function(str(arguments[0].value) + " " + arguments[0].symbol)
-        else:
-            self._last_result = ext_function.function(arguments[0].value)
+        arguments = self._consume_last_result() or []
+        self._last_result = ext_function.function(*[argument.value for argument in arguments] if len(arguments) else " ")
 
 def bytes_print(text):
     print(text.decode() if isinstance(text, bytes) else text)

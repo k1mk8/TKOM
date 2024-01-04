@@ -1,7 +1,6 @@
 main()
 {
-	a = 20.20 USD;
+	a = 20 USD;
 	b = 20 EUR;
-	c = a -> b;
-	print(c);
+	print(a -> b);
 }

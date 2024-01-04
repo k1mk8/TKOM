@@ -15,14 +15,15 @@ from parse_objects.objects import (
     IdentifierExpression,
     FunctionCall,
     OrExpression,
+    TranExpression,
     AndExpression,
     Comparison,
+    PowExpression,
     NegatedExpression,
     AddExpression,
     SubExpression,
     MulExpression,
     DivExpression,
-    ExponentialExpression,
     Constant,
     Operator
 )
@@ -611,7 +612,7 @@ class TestParser:
                 Token(value='y', position=Position(line=1, column=4), type=TokenType.ID),
                 Token(value=None, position=Position(line=1, column=34), type=TokenType.EOF),
             ],
-            ExponentialExpression(
+            PowExpression(
                 position=Position(line=1, column=2),
                 left=VariableAccess(
                     position=Position(line=1, column=2),
@@ -630,7 +631,7 @@ class TestParser:
                 Token(value=1, position=Position(line=1, column=4), type=TokenType.INT),
                 Token(value=None, position=Position(line=1, column=34), type=TokenType.EOF),
             ],
-            ExponentialExpression(
+            PowExpression(
                 position=Position(line=1, column=2),
                 left=VariableAccess(
                     position=Position(line=1, column=2),
@@ -646,7 +647,7 @@ class TestParser:
                 Token(value=1, position=Position(line=1, column=4), type=TokenType.INT),
                 Token(value=None, position=Position(line=1, column=34), type=TokenType.EOF),
             ],
-            ExponentialExpression(
+            PowExpression(
                 position=Position(line=1, column=2),
                 left=Constant(position=Position(line=1, column=2), value=1.5),
                 right=Constant(position=Position(line=1, column=4), value=1)
@@ -966,7 +967,7 @@ class TestParser:
                 Token(value='y', position=Position(line=1, column=4), type=TokenType.ID),
                 Token(value=None, position=Position(line=1, column=34), type=TokenType.EOF),
             ],
-            ExponentialExpression(
+            TranExpression(
                 position=Position(line=1, column=2),
                 left=VariableAccess(
                     position=Position(line=1, column=2),
@@ -985,7 +986,7 @@ class TestParser:
                 Token(value='USD', position=Position(line=1, column=4), type=TokenType.CURR),
                 Token(value=None, position=Position(line=1, column=34), type=TokenType.EOF),
             ],
-            ExponentialExpression(
+            TranExpression(
                 position=Position(line=1, column=2),
                 left=VariableAccess(
                     position=Position(line=1, column=2),

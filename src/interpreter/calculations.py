@@ -5,6 +5,7 @@ from parse_objects.objects import (
 )
 from interpreter.reference import Reference
 from currency.config import exchange_rates
+from currency.currency import Currency
 
 NUMBER_TYPES = [int, float]
 STR_TYPES = [str, bytes]
@@ -36,7 +37,9 @@ class Calculations:
         self._left = left
         self._right = right
         self._operator = comparison.operator
-        result = self._try_comapre_numbers()
+        result = self._try_compare_currency()
+        if result is None:
+            result = self._try_compare_numbers()
         if result is None:
             result = self._try_compare_bools()
         if result is None:
@@ -46,17 +49,13 @@ class Calculations:
             self._error_manager.fatal_error(error)
         return Reference(value=result)
 
-    def calculate_result(self, left, left_symbol, right, right_symbol, expression, method):
+    def calculate_result(self, left, right, expression, method):
         self._left = left
         self._right = right
-        self._left_symbol = left_symbol
-        self._right_symbol = right_symbol
         self._position = expression.position
         self._concatenating = isinstance(expression, AddExpression)
         self._method = method
-        result = None
-        if left_symbol != right_symbol and left_symbol is not None and right_symbol is not None or right in CURRENCY:
-            result = self._try_transfer_currency()
+        result = self._try_calculate_currency()
         if result is None:
             result = self._try_calculate_numbers()
         if result is None:
@@ -64,9 +63,7 @@ class Calculations:
         if result is None:
             error = WrongTypeForOperation(position=expression.position, name=(type(self._left), type(self._right)))
             self._error_manager.fatal_error(error)
-        if method == "tran":
-            return Reference(value=result, symbol=self._right_symbol)
-        return Reference(value=result, symbol=left_symbol)
+        return Reference(value=result)
 
     def negate_value(self, right, expression):
         self._right = right
@@ -84,7 +81,18 @@ class Calculations:
             self._error_manager.fatal_error(error)
         return Reference(value=method(left, right))
 
-    def _try_comapre_numbers(self):
+
+    def _try_compare_currency(self):
+        if not isinstance(self._left, Currency) or not isinstance(self._right, Currency):
+            return
+        exchange = exchange_rates[self._left.symbol][self._right.symbol]
+        value = self._left.value * exchange
+        method = NUMBER_OPERATOR_MAPPING.get(self._operator)
+        if not method:
+            return
+        return method(value, self._right.value)
+
+    def _try_compare_numbers(self):
         if type(self._left) not in NUMBER_TYPES or type(self._right) not in NUMBER_TYPES:
             return
         method = NUMBER_OPERATOR_MAPPING.get(self._operator)
@@ -113,16 +121,22 @@ class Calculations:
             return
         return self._method(self._left, self._right)
     
-    def _try_transfer_currency(self):
+    def _try_calculate_currency(self):
+        if not isinstance(self._left, Currency) or (not isinstance(self._right, Currency) and self._right not in CURRENCY):
+            return
         if self._method == "tran":
             if self._right in CURRENCY:
-                exchange = exchange_rates[self._left_symbol][self._right]
-                self._right_symbol = self._right
-                return self._left * exchange
-            exchange = exchange_rates[self._left_symbol][self._right_symbol]
-            return self._left * exchange
-        exchange = exchange_rates[self._right_symbol][self._left_symbol]
-        return self._method(self._left, self._right * exchange)
+                exchange = exchange_rates[self._left.symbol][self._right]
+                self._left.value = self._left.value * exchange
+                self._left.symbol = self._right.symbol
+                return self._left
+            exchange = exchange_rates[self._left.symbol][self._right.symbol]
+            self._left.value = self._left.value * exchange
+            self._left.symbol = self._right.symbol
+            return self._left
+        exchange = exchange_rates[self._right.symbol][self._left.symbol]
+        self._left.value = self._method(self._left.value, self._right.value * exchange)
+        return self._left
 
     def _try_concatenate_strings(self):
         if type(self._left) not in STR_TYPES or type(self._right) not in STR_TYPES or not self._concatenating:
