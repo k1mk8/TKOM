@@ -58,7 +58,7 @@ class Parser(Parser):
     def _expect_object(self, method, method_name):
         if not (result := method()):
             error = UnexpectedToken(position=self._token.position, name=self._token.value, function_name=method_name)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         return result
 
     def _parse_semi_colon(self):
@@ -89,7 +89,7 @@ class Parser(Parser):
         functions = self._parse_function_definitions()
         if self._token.type is not TokenType.EOF:
             error = UnexpectedToken(position=self._token.position, name=self._token.value)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         return Program(position=Position(line=1, column=1), functions=functions)
 
     def _parse_function_definitions(self):
@@ -106,7 +106,7 @@ class Parser(Parser):
             dict_fun = functions.setdefault(function_name, fun)
             if dict_fun != fun:
                 error = DuplicateDefinition(position=position, name=function_name)
-                self._error_handler.fatal_error(error)
+                raise self._error_handler.fatal_error(error)
         return functions
     
     def _parse_argument_list(self):
@@ -208,7 +208,7 @@ class Parser(Parser):
         condition = self._parse_expression()
         if not condition:
             error = UnexpectedToken(position=self._token.position, name=self._token.value)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         self._parse_bracket(TokenType.ROUND_B_C)
         true_block = self._expect_object(self._parse_block, 'if_statement_true_block')
         if self._token.type is not TokenType.ELSE_KEY:
@@ -226,7 +226,7 @@ class Parser(Parser):
         condition = self._parse_expression()
         if not condition:
             error = UnexpectedToken(position=self._token.position, name=self._token.value)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         self._parse_bracket(TokenType.ROUND_B_C)
         block = self._expect_object(self._parse_block, 'while_statement')
         return WhileStatement(position=position, condition=condition, true_block=block)
@@ -340,7 +340,7 @@ class Parser(Parser):
         node = self._parse_numeric_operand()
         if negated and not node:
             error = ExpectingExpression(position=self._token.position, name=self._token.value)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         if not negated and not node:
             return
         return NegatedExpression(position=position, left='-', right=node) if negated else node

@@ -10,6 +10,11 @@ class WrongTypeForOperation(Error):
         return f'''Operation between types {self.name[0]} and {self.name[1]} is not allowed
         in line {self.position.line}, column {self.position.column}'''
     
+class BreakOrContinueOutsideWhile(Error):
+    def __repr__(self) -> str:
+        return f'''Break or continue outside the loop in function {self.name} in line {self.position.line}, 
+        column {self.position.column}'''
+    
 class ValueSizeExceed(Error):
     def __repr__(self) -> str:
         return f'''Value size exceed in line {self.position.line}, column {self.position.column}'''

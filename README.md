@@ -169,7 +169,7 @@ main()
 ### Dostępność zmiennych
 
 ```
-mian()
+main()
 {
 	cost = 21;
 	tax = cost * 0.1;

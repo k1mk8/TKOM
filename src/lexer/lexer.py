@@ -210,14 +210,7 @@ class Lexer(Lexer):
                 return Token(value=possible_operator, position=self._token_start_position, type=operator_type)
             else:
                 operator_type = OPERATOR_MAPPING.get(operator, None)
-                if operator_type:
-                    self._next_character()
-                    return Token(value=operator, position=self._token_start_position, type=operator_type)
-            self._next_character()
-            error = UnknownTokens(position=self._token_start_position, name=operator)
-            if not self._error_handler.save_error(error):
-                raise Exception('Error handler is full')
-            return Token(value=operator, position=self._token_start_position, type=TokenType.ERROR)
+                return Token(value=operator, position=self._token_start_position, type=operator_type)
         else:
             return None
 
