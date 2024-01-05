@@ -18,7 +18,9 @@ class DivisionByZero(Error):
 
 class NotExactArguments(Error):
     def __repr__(self) -> str:
-        return f'''Not exact number of arguments in line {self.position.line}, column {self.position.column}'''
+        return f'''Not exact number of arguments {self.name} in line {self.position[0].line}, column {self.position[0].column}.
+        Calling on line {self.position[1].line}, column {self.position[1].column}
+        '''
 
 
 class UndefinedVariable(Error):

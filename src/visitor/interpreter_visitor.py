@@ -5,6 +5,7 @@ from visitor.interface import Visitor
 from context.context import Context
 from parse_objects.objects import (
     VariableAccess,
+    BuiltInFunction
 )
 from interpreter.reference import Reference
 from error_manager.interpreter_er import (
@@ -25,6 +26,7 @@ class InterpreterVisitor(Visitor):
         self._global_context = Context()
         self._call_context = Context(global_context=self._global_context)
         self._last_contexts = deque()
+        self._call_position = None
         self._returning = False
         self._breaking = False
         self._continuing = False
@@ -46,21 +48,28 @@ class InterpreterVisitor(Visitor):
         expression.right.accept(self)
         right = self._consume_last_result()
         return left, right
+    
+    def _call_function(self, function, arguments):
+        self._last_contexts.append(self._call_context)
+        self._call_context = Context(global_context=self._global_context)
+        function.accept(self)
+        self._call_context = self._last_contexts.pop()
 
     def visit_program(self, program):
         for function in program.functions.values():
             self._global_context.insert_symbol(function.name, function)
         self._insert_builtin_functions()
-        main_function = self._global_context.get_value('main') ## TODO call like normal function
+        main_function = self._global_context.get_value('main')
         if not main_function:
             error = NoMainFunction(position=None, name=None)
-            self._error_manager.fatal_error(error)
-        main_function.accept(self)
+            self._error_manager.fatal_error(error) 
+        self._call_function(main_function, []) ## Done
 
     def visit_function_definition(self, function_definition):
         arguments = self._consume_last_result() or []
         if len(arguments) != len(function_definition.parameters):
-            error = NotExactArguments(position=function_definition.position) ## TODO add call position
+            error = NotExactArguments(position=(function_definition.position, self._call_position)
+            , name=function_definition.name) ## DONE
             self._error_manager.fatal_error(error)
         for argument, parameter in zip(arguments, function_definition.parameters):
             self._call_context.insert_symbol(parameter.name, argument)
@@ -103,7 +112,7 @@ class InterpreterVisitor(Visitor):
             if self._breaking or self._returning:
                 self._breaking = False
                 break
-            if self._continuing: ## TODO destroy continue outside the while statement
+            if self._continuing:
                 self._continuing = False
             statement.condition.accept(self)
             execute = self._consume_last_result()
@@ -221,34 +230,32 @@ class InterpreterVisitor(Visitor):
         self._resolving = True
         assignment.right.accept(self)
         value = self._consume_last_result()
-        value = value
+        value = value.value if isinstance(value, Reference) else value
         old_value = self._call_context.get_value(variable_name)
         if old_value is None:
             self._call_context.insert_symbol(
-                variable_name, value
+                variable_name, value if isinstance(value, Reference) else Reference(value=value) # DONE
             )
         else:
             old_value.value = value
 
     def visit_function_call(self, fun_call):
         arguments = []
+        self._call_position = fun_call.position
         for argument in fun_call.arguments:
             argument.accept(self)
             value = self._consume_last_result()
-            arguments.append(value)
+            arguments.append(value if isinstance(value, Reference) else Reference(value=value))
         self._last_result = arguments
         function = self._global_context.get_value(fun_call.name)
         if function is None:
             error = FunctionNotFound(position=fun_call.position, name=fun_call.name)
             self._error_manager.fatal_error(error)
-        self._last_contexts.append(self._call_context)
-        self._call_context = Context(global_context=self._global_context)
-        function.accept(self)
-        self._call_context = self._last_contexts.pop()
+        self._call_function(function, arguments)
 
     def visit_external_function(self, ext_function):
         arguments = self._consume_last_result() or []
-        self._last_result = ext_function.function(*[argument.value for argument in arguments] if len(arguments) else " ")
+        self._last_result = ext_function.function(*[argument.value for argument in arguments] if len(arguments) else " ") # DONE
 
 def bytes_print(text):
     print(text.decode() if isinstance(text, bytes) else text)

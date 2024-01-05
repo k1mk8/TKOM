@@ -1,9 +1,12 @@
+funx(a, b){
+	print(a);
+}
 main()
 {
 	var_int = 5;
 	var_bool = true;
 	var_float = 5.5;
 	var_string = 'string';
-
-	print(var_int);
+	a = 7;
+	funx(5);
 }
