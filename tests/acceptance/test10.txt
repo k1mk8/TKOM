@@ -1,6 +1,12 @@
+fun(a){
+	return a;
+}
+
 main()
 {
 	a = 20 USD;
 	b = 20 EUR;
-	print(a -> b);
+	x = b.type;
+	fun = 10;
+	print(x);
 }

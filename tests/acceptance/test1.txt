@@ -1,4 +1,4 @@
-funx(a, b){
+x(a){
 	print(a);
 }
 main()
@@ -7,6 +7,8 @@ main()
 	var_bool = true;
 	var_float = 5.5;
 	var_string = 'string';
-	a = 7;
-	funx(5);
+	print(x(8));
+	x = 7;
+	print(x(5));
+	print(x);
 }

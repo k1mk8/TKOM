@@ -13,7 +13,8 @@ from error_manager.interpreter_er import (
     NotExactArguments,
     UndefinedVariable,
     FunctionNotFound,
-    DivisionByZero
+    DivisionByZero,
+    WrongTypeForOperation
 )
 from parse_objects.objects import BuiltInFunction
 from interpreter.calculations import Calculations
@@ -40,7 +41,7 @@ class InterpreterVisitor(Visitor):
     def _insert_builtin_functions(self):
         for function in BUILTINS_LIST:
             function_obj = BuiltInFunction(position=None, name=function[0], function=function[1])
-            self._global_context.insert_symbol(function[0], function_obj)
+            self._global_context.insert_symbol_function(function[0], function_obj)
 
     def _get_left_right_expressions(self, expression):
         expression.left.accept(self)
@@ -57,9 +58,9 @@ class InterpreterVisitor(Visitor):
 
     def visit_program(self, program):
         for function in program.functions.values():
-            self._global_context.insert_symbol(function.name, function)
+            self._global_context.insert_symbol_function(function.name, function)
         self._insert_builtin_functions()
-        main_function = self._global_context.get_value('main')
+        main_function = self._global_context.get_value_function('main')
         if not main_function:
             error = NoMainFunction(position=None, name=None)
             self._error_manager.fatal_error(error) 
@@ -69,10 +70,10 @@ class InterpreterVisitor(Visitor):
         arguments = self._consume_last_result() or []
         if len(arguments) != len(function_definition.parameters):
             error = NotExactArguments(position=(function_definition.position, self._call_position)
-            , name=function_definition.name) ## DONE
+            , name=function_definition.name)
             self._error_manager.fatal_error(error)
         for argument, parameter in zip(arguments, function_definition.parameters):
-            self._call_context.insert_symbol(parameter.name, argument)
+            self._call_context.insert_symbol_function(parameter.name, argument)
         function_definition.block.accept(self)
         self._returning = False
 
@@ -89,7 +90,8 @@ class InterpreterVisitor(Visitor):
 
     def visit_identifier_expression(self, identifier_expression):
         if self._resolving:
-            value_obj = self._call_context.get_value(identifier_expression.name)
+            value_obj = self._call_context.get_value_variable(identifier_expression.name) or \
+                self._call_context.get_value_function(identifier_expression.name)
             if value_obj is None:
                 error = UndefinedVariable(position=identifier_expression.position, name=identifier_expression.name)
                 self._error_manager.fatal_error(error)
@@ -135,38 +137,56 @@ class InterpreterVisitor(Visitor):
         left, right = self._get_left_right_expressions(comparison)
         self._last_result = self._calculations_handler.compare_values(left.value, right.value, comparison)
 
+    def _check_types(self, left, right, expression):
+        if (isinstance(left.value, Currency) and not isinstance(right.value, Currency)) or (not isinstance(left.value, Currency) and isinstance(right.value, Currency)):
+            error = WrongTypeForOperation(position=expression.position, name=(type(left.value), type(right.value)))
+            self._error_manager.fatal_error(error)
+
     def visit_add_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
+        self._check_types(left, right, expression)
         self._last_result = self._calculations_handler.calculate_result(
             left.value, right.value, expression, lambda a, b: a + b
         )
 
     def visit_sub_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
+        self._check_types(left, right, expression)
         self._last_result = self._calculations_handler.calculate_result(
             left.value, right.value, expression, lambda a, b: a - b
         )
 
     def visit_mul_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
+        if (isinstance(left, Currency) and isinstance(right, Currency)):
+            error = WrongTypeForOperation(position=expression.position, name=(type(left.value), type(right.value)))
+            self._error_manager.fatal_error(error)
         self._last_result = self._calculations_handler.calculate_result(
             left.value, right.value, expression, lambda a, b: a * b
         )
 
     def visit_div_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
-        if right.value == 0:
+        if right.value == 0 or right.value == 0.0:
             error = DivisionByZero(position=expression.position, name=None)
             self._error_manager.fatal_error(error)
-        self._last_result = self._calculations_handler.calculate_result(
-            left.value, right.value, expression, lambda a, b: a / b
-        )
+        if isinstance(right.value, Currency):
+            error = WrongTypeForOperation(position=expression.position, name=(type(left.value), type(right.value)))
+            self._error_manager.fatal_error(error)
+        else:
+            self._last_result = self._calculations_handler.calculate_result(
+                left.value, right.value, expression, lambda a, b: a / b
+            )
 
     def visit_pow_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
-        self._last_result = self._calculations_handler.calculate_result(
-            left.value, right.value, expression, lambda a, b: pow(a, b)
-        )
+        if type(left.value) in [float, int] and type(left.value) in [float, int]:
+            self._last_result = self._calculations_handler.calculate_result(
+                left.value, right.value, expression, lambda a, b: pow(a, b)
+            )
+        else:
+            error = WrongTypeForOperation(position=expression.position, name=(type(left.value), type(right.value)))
+            self._error_manager.fatal_error(error)
 
     def visit_tran_expression(self, expression):
         left, right = self._get_left_right_expressions(expression)
@@ -204,20 +224,13 @@ class InterpreterVisitor(Visitor):
         )
 
     def visit_constant(self, constant):
-        if isinstance(constant, Currency):
-            self._last_result = Reference(value=constant)
-        else:
-            self._last_result = Reference(value=constant.value)
+        self._last_result = Reference(value=constant.value)
 
     def visit_variable_access(self, variable_access):
         variable_access.variable[0].accept(self)
         if len(variable_access.variable) == 1:
             return
         method_or_value = self._consume_last_result().value
-        if isinstance(method_or_value, str):
-            self._resolving = True
-            variable_access.variable[0].accept(self)
-            method_or_value = self._consume_last_result().value
         for part in variable_access.variable[1:]:
             method_name = part.variable[0].name if isinstance(part, VariableAccess) else part.name
             method_or_value = getattr(method_or_value, method_name)
@@ -231,10 +244,10 @@ class InterpreterVisitor(Visitor):
         assignment.right.accept(self)
         value = self._consume_last_result()
         value = value.value if isinstance(value, Reference) else value
-        old_value = self._call_context.get_value(variable_name)
+        old_value = self._call_context.get_value_variable(variable_name)
         if old_value is None:
-            self._call_context.insert_symbol(
-                variable_name, value if isinstance(value, Reference) else Reference(value=value) # DONE
+            self._call_context.insert_symbol_variable(
+                variable_name, value if isinstance(value, Reference) else Reference(value=value)
             )
         else:
             old_value.value = value
@@ -247,7 +260,7 @@ class InterpreterVisitor(Visitor):
             value = self._consume_last_result()
             arguments.append(value if isinstance(value, Reference) else Reference(value=value))
         self._last_result = arguments
-        function = self._global_context.get_value(fun_call.name)
+        function = self._global_context.get_value_function(fun_call.name)
         if function is None:
             error = FunctionNotFound(position=fun_call.position, name=fun_call.name)
             self._error_manager.fatal_error(error)
@@ -255,7 +268,7 @@ class InterpreterVisitor(Visitor):
 
     def visit_external_function(self, ext_function):
         arguments = self._consume_last_result() or []
-        self._last_result = ext_function.function(*[argument.value for argument in arguments] if len(arguments) else " ") # DONE
+        self._last_result = ext_function.function(*[argument.value for argument in arguments] if len(arguments) else " ")
 
 def bytes_print(text):
     print(text.decode() if isinstance(text, bytes) else text)

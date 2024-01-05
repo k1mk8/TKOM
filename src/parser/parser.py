@@ -192,13 +192,11 @@ class Parser(Parser):
         name = self._token.value
         self._next_token()
         if self._token.type is not TokenType.ROUND_B_O:
-            expression = None
+            return IdentifierExpression(name=name, position=position)
         else:
             self._next_token()
             expression = self._parse_argument_list()
             self._parse_bracket(TokenType.ROUND_B_C)
-        if not expression and expression != []:
-            return IdentifierExpression(name=name, position=position)
         return FunctionCall(name=name, position=position, arguments=expression)
 
     def _parse_if_statement(self):
@@ -363,9 +361,10 @@ class Parser(Parser):
             position = self._token.position
             self._next_token()
             if self._token.type == TokenType.CURR:
-                node = Currency(symbol=self._token.value, value=value, position=position)
+                node = Currency(type=self._token.value, value=value)
+                new_node = Constant(value=node, position=position)
                 self._next_token()
-                return node
+                return new_node
             else:
                 return Constant(value=value, position=position)
         node = Constant(value=bool_value if bool_value is not None else self._token.value, position=self._token.position)

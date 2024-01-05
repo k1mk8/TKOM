@@ -9,6 +9,10 @@ class WrongTypeForOperation(Error):
     def __repr__(self) -> str:
         return f'''Operation between types {self.name[0]} and {self.name[1]} is not allowed
         in line {self.position.line}, column {self.position.column}'''
+    
+class ValueSizeExceed(Error):
+    def __repr__(self) -> str:
+        return f'''Value size exceed in line {self.position.line}, column {self.position.column}'''
 
 
 class DivisionByZero(Error):

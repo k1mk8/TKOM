@@ -8,11 +8,19 @@ class ScopeTableInterface(metaclass=ABCMeta):
     _table: dict[str, Union[Callable, int, float, bool, str, Currency]]
 
     @abstractmethod
-    def insert_symbol(self, name, value):
+    def insert_symbol_function(self, name, value):
         ...
 
     @abstractmethod
-    def get_value(self, name):
+    def insert_symbol_variable(self, name, value):
+        ...
+
+    @abstractmethod
+    def get_value_function(self, name):
+        ...
+
+    @abstractmethod
+    def get_value_variable(self, name):
         ...
 
 
@@ -28,9 +36,18 @@ class ContextInterface(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def insert_symbol(self, name, value):
+    def insert_symbol_function(self, name, value):
         ...
 
     @abstractmethod
-    def get_value(self, name):
+    def insert_symbol_variable(self, name, value):
         ...
+
+    @abstractmethod
+    def get_value_function(self, name):
+        ...
+
+    @abstractmethod
+    def get_value_variable(self, name):
+        ...
+
