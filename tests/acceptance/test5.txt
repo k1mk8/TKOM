@@ -1,0 +1,12 @@
+main()
+{
+	cost = 21;
+	tax = cost * 0.1;
+	totalCost = tax + cost;
+	if(totalCost > 20)
+	{
+		diff = totalCost - 20;
+		print(diff); # 3.1
+	}
+	print(diff); # zmienna już nie istnieje
+}

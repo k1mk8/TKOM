@@ -9,6 +9,10 @@ Język z typem walutowym
 
 Opiekun projektu: dr inż. Piotr Gawkowski
 
+## Uruchomienie projektu
+
+Aby prawidłowo uruchomić projekt należy wpisać w terminal komende: python3.11 src/main.py {ścieżka do pliku} znajdując sie w głównym folderze projektu.
+
 ## Założenia podstawowe
 - dynamicznie typowany
 - słabo typowany
@@ -36,7 +40,7 @@ Opiekun projektu: dr inż. Piotr Gawkowski
 - obsługa operatorów arytmetycznych +,-,*,/,^
 - obsługa operatorów porównujących <,>,<=,>=,==,!=
 - obsługa operatorów logicznych ||, &&, !
-- operator przewalutowania ->, priorytet na poziomie priorytetu operatora negacji
+- operator przewalutowania ->, priorytet na poziomie priorytetu operatora potęgowania
 - pobieranie aktualnych kursów walutowych ze strony i tworzenie macierzy pomiędzy nimi (macierz będzie zawierać informacje o kursie przewalutowania pomiędzy konkretnymi walutami)
 
 
@@ -88,8 +92,8 @@ Deklaracja zmiennych może odbywać się w dowolnym funckji w programie. Jednak 
 - argument_list				= expression, {",", expression};
 - parameter_list			= id, {",", id};
 - block                     = "{", {statement}, "}"
-- statement                 = variable_access | function_call, ";", | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
-- variable_access 			= id, ".", id;
+- statement                 = variable_access | if_statement | while_statement | assignment, ";" | break, ";" | continue, ";" | return_statement; 
+- variable_access 			= function_call, ".", function_call;
 - assignment               	= id, "=", expression;
 - function_call             = id, ["(", [argument_list], ")"];
 - if_statement              = "if", "(", expression, ")", block, ["else", block];
@@ -101,9 +105,9 @@ Deklaracja zmiennych może odbywać się w dowolnym funckji w programie. Jednak 
 - comparison				= additive_expression, [("==" | "!=" | ">=" | "<=" | "<" | ">"), additive_expression];
 - additive_expression       = multiplicative_expression, {"+" | "-"}, multiplicative_expression;
 - multiplicative_expression	= factor, {"*" | "/"}, factor;
-- factor					= [-], exponent_factor, {"^", exponent_factor};
-- exponent_factor			= numeric_term, "->" [variable_access | currency_id];
-- numeric_term				= constant | "(", expression, ")" | function_call;
+- factor					= exponent_factor, {("^" | "->"), exponent_factor};
+- exponent_factor			= [-], numeric_term;
+- numeric_term				= constant | "(", expression, ")" | variable_access;
 - constant 					= num_const | bool_const | string_const | currency_const;
 - currency_const			= num_const , currency_id;
 - num_const					= non_zero_digit, {digit}, [".", {digit}];
@@ -127,7 +131,7 @@ main()
 	var_int = 5;
 	var_bool = true;
 	var_float = 5.5;
-	var_string = "string";
+	var_string = 'string';
 }
 ```
 ### Wypisywanie wartości 
@@ -145,8 +149,8 @@ main()
 ```
 main()
 {
-	str = "poczatek";
-	str2 = "koniec";
+	str = 'poczatek';
+	str2 = 'koniec';
 	str3 = str + str2;
 	print(str3); # poczatekkoniec
 	print(str + str2); # poczatekkoniec
@@ -165,7 +169,7 @@ main()
 ### Dostępność zmiennych
 
 ```
-mian()
+main()
 {
 	cost = 21;
 	tax = cost * 0.1;
@@ -200,7 +204,7 @@ main()
 func(x)
 {
 	if(x > 5){
-		func(x-1);
+		func(x - 1);
 	}
 	return 10;
 }
@@ -274,12 +278,12 @@ main()
 main()
 {
 	x = 5;
-	y = "abc";
-	yy = "xyz";
+	y = 'abc';
+	yy = 'xyz';
 	z = 5.5;
 
 	b = y + yy;
-	c = "abcxyz";
+	c = 'abcxyz';
 	if(b == c)
 	{
 		print(x);
@@ -304,7 +308,7 @@ main()
 main()
 {
 	x = 5;
-	y = "ABC";
+	y = 'ABC';
 	if(x > y)
 	{
 		print(1);
@@ -316,14 +320,14 @@ main()
 ```
 main()
 {
-	x = "5;
+	x = '5;
 	print(x);
 }
 ```
 
 ## Obsługa błędów
 
-W przypadku napotkania błędu podczas pracy lexera/parsera/interpretera, error manager agreguje i dzieli błędy na krytyczne i niekrytyczne. Error manager będzie przekazywany do modułów w konstruktorze. Error manager będzie W momencie napotkania błędu krytycznego podniesiony zostanie wyjątek, który będzie obsłużony na zewnątrz, natomiast gdy błąd jest niekrytyczny, użytkownik otrzyma informację o jego wystąpieniu, jednak program może dalej wykonywać się poprawnie.
+W przypadku napotkania błędu podczas pracy lexera/parsera/interpretera, error manager agreguje i dzieli błędy na krytyczne i niekrytyczne. Error manager będzie przekazywany do modułów w konstruktorze. Error manager w momencie napotkania błędu krytycznego podniesie wyjątek, który będzie obsłużony na zewnątrz, natomiast gdy błąd jest niekrytyczny, użytkownik otrzyma informację o jego wystąpieniu, jednak program może dalej wykonywać się poprawnie.
 
 ### Lekser:
 #### Niekrytyczne
@@ -359,7 +363,7 @@ W przypadku napotkania błędu podczas pracy lexera/parsera/interpretera, error 
 - Testy - przy użyciu pytest
 - Error Manager - obsługa błędów w kodzie
 
-Interface pomiędzy lekserem, a parserem będzie wyglądał w następujący sposób. Główny plik stworzy konieczne obiekty (lexer, parser itp.), a następnie wywoła metodę parse(), która spowoduje przechodzenie przez plik tekstowy otrzymany do interpretacji i przetworzy na bieżąco otrzymane tokeny w drzewo AST. Gdy praca z aktualnym tokenem zakończy się, wykonana zostanie metoda next() w lekserze. Dzięki temu uzyskamy leniwą tokenizację. Każdy z modułów może również zgłosić błąd, przy użyciu obiektu ErrorManagera.
+Interface pomiędzy lekserem, a parserem będzie wyglądał w następujący sposób. Główny plik stworzy konieczne obiekty (lexer, parser itp.), a następnie wywoła metodę parse(), która spowoduje przechodzenie przez plik tekstowy otrzymany do interpretacji i przetworzy na bieżąco otrzymane tokeny w drzewo AST. Gdy praca z aktualnym tokenem zakończy się, wykonana zostanie metoda next() w lekserze. Dzięki temu uzyskamy leniwą tokenizację. Każdy z modułów może również zgłosić błąd, przy użyciu obiektu ErrorManagera. Został zaimplementowany również oddzielny moduł, którego zadaniem jest wykonywanie obliczeń podanych przez interpreter w czasie przetwarzania pliku wejściowego. Obsługuje on operacje dla wszystkich typó zmiennych (waluta, int, string, bool).
 
 
 ## Testowanie

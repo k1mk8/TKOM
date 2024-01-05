@@ -12,7 +12,6 @@ from parse_objects.objects import (
     FunctionDefinition,
     Block,
     IdentifierExpression,
-    ExponentialExpression,
     VariableAccess,
     Constant
 )

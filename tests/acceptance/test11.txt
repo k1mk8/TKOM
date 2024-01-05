@@ -1,0 +1,24 @@
+main()
+{
+	x = 5;
+	y = 'abc';
+	yy = 'xyz';
+	z = 5.5;
+
+	b = y + yy;
+	c = 'abcxyz';
+	if(b == c)
+	{
+		print(10);
+	}
+	else
+	{
+		while(x > 2)
+		{
+			print(x);
+			x = x - 1;
+		}
+	}
+    
+    return 0;
+}

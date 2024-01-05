@@ -1,0 +1,6 @@
+main()
+{
+	b = 20 EUR;
+	a = input();
+	print(a * a);
+}

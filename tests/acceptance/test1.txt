@@ -1,0 +1,14 @@
+x(a){
+	print(a);
+}
+main()
+{
+	var_int = 5;
+	var_bool = true;
+	var_float = 5.5;
+	var_string = 'string';
+	print(x(8));
+	x = 7;
+	print(x(5));
+	print(x);
+}

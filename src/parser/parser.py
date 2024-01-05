@@ -1,5 +1,6 @@
 
 from lexer.interface import Lexer
+from currency.currency import Currency
 from parser.interface import Parser
 from tokkens.token import TokenType, Token, CONSTANT_TOKENS, Position
 from parse_objects.objects import (
@@ -22,14 +23,13 @@ from parse_objects.objects import (
     AndExpression,
     Comparison,
     NegatedExpression,
-    ExponentialExpression,
     Constant,
     TOKEN_TYPE_OPERATOR_MAPPING,
     ADDITIVE_OPERATOR_MAPPING,
     MULTIPLICATIVE_OPERATOR_MAPPING,
+    FACTOR_OPERATOR_MAPPING,
     BOOL_VALUE_MAPPING
 )
-from error_manager.interface import ErrorManager
 from error_manager.parser_er import (
     UnexpectedToken,
     MissingSemiColon,
@@ -58,7 +58,7 @@ class Parser(Parser):
     def _expect_object(self, method, method_name):
         if not (result := method()):
             error = UnexpectedToken(position=self._token.position, name=self._token.value, function_name=method_name)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         return result
 
     def _parse_semi_colon(self):
@@ -89,7 +89,7 @@ class Parser(Parser):
         functions = self._parse_function_definitions()
         if self._token.type is not TokenType.EOF:
             error = UnexpectedToken(position=self._token.position, name=self._token.value)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         return Program(position=Position(line=1, column=1), functions=functions)
 
     def _parse_function_definitions(self):
@@ -106,7 +106,7 @@ class Parser(Parser):
             dict_fun = functions.setdefault(function_name, fun)
             if dict_fun != fun:
                 error = DuplicateDefinition(position=position, name=function_name)
-                self._error_handler.fatal_error(error)
+                raise self._error_handler.fatal_error(error)
         return functions
     
     def _parse_argument_list(self):
@@ -192,13 +192,11 @@ class Parser(Parser):
         name = self._token.value
         self._next_token()
         if self._token.type is not TokenType.ROUND_B_O:
-            expression = None
+            return IdentifierExpression(name=name, position=position)
         else:
             self._next_token()
             expression = self._parse_argument_list()
             self._parse_bracket(TokenType.ROUND_B_C)
-        if not expression and expression != []:
-            return IdentifierExpression(name=name, position=position)
         return FunctionCall(name=name, position=position, arguments=expression)
 
     def _parse_if_statement(self):
@@ -210,7 +208,7 @@ class Parser(Parser):
         condition = self._parse_expression()
         if not condition:
             error = UnexpectedToken(position=self._token.position, name=self._token.value)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         self._parse_bracket(TokenType.ROUND_B_C)
         true_block = self._expect_object(self._parse_block, 'if_statement_true_block')
         if self._token.type is not TokenType.ELSE_KEY:
@@ -228,7 +226,7 @@ class Parser(Parser):
         condition = self._parse_expression()
         if not condition:
             error = UnexpectedToken(position=self._token.position, name=self._token.value)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         self._parse_bracket(TokenType.ROUND_B_C)
         block = self._expect_object(self._parse_block, 'while_statement')
         return WhileStatement(position=position, condition=condition, true_block=block)
@@ -260,25 +258,25 @@ class Parser(Parser):
 
     def _parse_expression(self):
         position = self._token.position
-        if not (left := self._parse_or_operand()):
+        if not (left := self._parse_or_term()):
             return
         while self._token.type is TokenType.OR:
             self._next_token()
-            right = self._expect_object(self._parse_or_operand, 'expression')
+            right = self._expect_object(self._parse_or_term, 'expression')
             left = OrExpression(position=position, left=left, right=right)
         return left
 
-    def _parse_or_operand(self):
+    def _parse_or_term(self):
         position = self._token.position
-        if not (left := self._parse_and_operand()):
+        if not (left := self._parse_and_term()):
             return
         while self._token.type is TokenType.AND:
             self._next_token()
-            right = self._expect_object(self._parse_and_operand, 'or_operand')
+            right = self._expect_object(self._parse_and_term, 'or_operand')
             left = AndExpression(position=position, left=left, right=right)
         return left
 
-    def _parse_and_operand(self):
+    def _parse_and_term(self):
         position = self._token.position
         negated = False
         if self._token.type is TokenType.NOT:
@@ -327,10 +325,10 @@ class Parser(Parser):
         position = self._token.position
         if not (left := self._parse_exponent_factor()):
             return
-        while self._token.type is TokenType.POWER or self._token.type is TokenType.TRANSFER:
+        while expression := FACTOR_OPERATOR_MAPPING.get(self._token.type):
             self._next_token()
             right = self._expect_object(self._parse_exponent_factor, 'factor')
-            left = ExponentialExpression(position=position, left=left, right=right)
+            left = expression(position=position, left=left, right=right)
         return left
 
     def _parse_exponent_factor(self):
@@ -342,7 +340,7 @@ class Parser(Parser):
         node = self._parse_numeric_operand()
         if negated and not node:
             error = ExpectingExpression(position=self._token.position, name=self._token.value)
-            self._error_handler.fatal_error(error)
+            raise self._error_handler.fatal_error(error)
         if not negated and not node:
             return
         return NegatedExpression(position=position, left='-', right=node) if negated else node
@@ -358,6 +356,17 @@ class Parser(Parser):
         if self._token.type not in CONSTANT_TOKENS:
             return
         bool_value = BOOL_VALUE_MAPPING.get(self._token.type)
+        if self._token.type in [TokenType.INT, TokenType.FLOAT]:
+            value = self._token.value
+            position = self._token.position
+            self._next_token()
+            if self._token.type == TokenType.CURR:
+                node = Currency(type=self._token.value, value=value)
+                new_node = Constant(value=node, position=position)
+                self._next_token()
+                return new_node
+            else:
+                return Constant(value=value, position=position)
         node = Constant(value=bool_value if bool_value is not None else self._token.value, position=self._token.position)
         self._next_token()
         return node

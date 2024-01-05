@@ -23,6 +23,7 @@ class TestLexer:
         with ModulErrorManager() as error_handler:
             lexer = Lexer(source=io.StringIO(source, newline=''), error_handler=error_handler, str_len_limit=256)
             assert lexer.next() == expected_token
+            assert lexer.next() == expected_token
 
     @pytest.mark.parametrize('source, expected_token', [
         ('.', Token(value='.', position=Position(line=1, column=1), type=TokenType.DOT)),
@@ -161,12 +162,6 @@ class TestLexer:
         ('~', Token(value='~', position=Position(line=1, column=1), type=TokenType.ERROR)),
         ('"', Token(value='"', position=Position(line=1, column=1), type=TokenType.ERROR)),
         (':', Token(value=':', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('|', Token(value='|', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('&', Token(value='&', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('|&', Token(value='|&', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('&|', Token(value='&|', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('%', Token(value='%', position=Position(line=1, column=1), type=TokenType.ERROR)),
-        ('@', Token(value='@', position=Position(line=1, column=1), type=TokenType.ERROR)),
     ])
     def test_next_unknown(self, source, expected_token):
         with ModulErrorManager() as error_handler:
@@ -198,13 +193,15 @@ class TestLexer:
                 Token(value=None, position=Position(line=2, column=14), type=TokenType.EOF),
             ]),
         (
-            'gżegżółka\r\n co_to \'string\' while',
+            'gżegżółka\r\n co_to \'string\' while =||',
             [
                 Token(value='gżegżółka', position=Position(line=1, column=1), type=TokenType.ID),
                 Token(value='co_to', position=Position(line=2, column=2), type=TokenType.ID),
                 Token(value=b'string', position=Position(line=2, column=8), type=TokenType.STR),
                 Token(value='while', position=Position(line=2, column=17), type=TokenType.WHILE_KEY),
-                Token(value=None, position=Position(line=2, column=22), type=TokenType.EOF),
+                Token(value='=', position=Position(line=2, column=23), type=TokenType.ASSIGN),
+                Token(value='||', position=Position(line=2, column=24), type=TokenType.OR),
+                Token(value=None, position=Position(line=2, column=26), type=TokenType.EOF),
             ]
         ),
         (

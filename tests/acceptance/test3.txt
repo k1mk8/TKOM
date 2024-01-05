@@ -1,0 +1,8 @@
+main()
+{
+	str = 'poczatek';
+	str2 = 'koniec';
+	str3 = str + str2;
+	print(str3); # poczatekkoniec
+	print(str + str2); # poczatekkoniec
+}
